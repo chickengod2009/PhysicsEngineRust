@@ -5,8 +5,10 @@ pub struct KE{
 
     mass : unit,
     value : unit,
-    velocity : unit
+    velocity : unit,
+    h: i32
 
 
 }
+//f
 
