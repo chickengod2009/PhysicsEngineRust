@@ -1,5 +1,16 @@
 use crate::Physics::unit;
-
+//type unit = f64;
+fn main(){
+  
+  let g: Vec<Point>= vec![Point::new(0_f64,0_f64),Point::new(4_f64,0_f64),Point::new(4_f64,4_f64), Point::new(0_f64,4_f64)];
+  let h = Polygon::new(g);
+  
+  for i in h.angles.iter(){
+    println!("{}",i.angle);
+  }
+  
+  
+}
 pub struct Point{
     x: unit, y:unit
 }
@@ -7,7 +18,8 @@ pub struct Line{
     a:Point, b:Point,
     slope: unit,
     k: u64,
-    is_vert: bool
+    is_vert: bool,
+    ang_to_vert: unit
 }
 pub struct Ray{
     a:Point, dir:unit
@@ -30,10 +42,14 @@ impl PartialEq for Point{
         self.x == other.x && self.y == other.y
     }
 }
-
+impl Point{
+  fn new(d: f64, b: f64) ->Self{
+    Self{x:d, y:b}
+  }
+}
 impl Line {
     fn new(a: Point, b: Point) -> Self{
-        let mut h =Self { a:a, b:b, slope:0 as unit, k: 0, is_vert:false };
+        let mut h =Self { a:a, b:b, slope:0 as unit, k: 0, is_vert:false, ang_to_vert: 0 as unit};
         h.calc_slope();
         h
     }
@@ -65,6 +81,8 @@ impl Line {
             return None;
         }
         let slope: unit = x/y;
+        
+        
 
         self.slope=slope;
         Some(slope)
@@ -80,7 +98,13 @@ impl Clone for Point{
         Self{x:self.x, y:self.y}
     }
 }
-
+impl Clone for Line{
+  fn clone(&self)->Self{
+    
+    Self{a:self.a.clone(), b:self.b.clone(), slope:self.slope, is_vert:self.is_vert,k:self.k}
+    
+  }
+}
 impl Angle{
 
     fn new(a: Line, b: Line)->Option<Self>{
@@ -98,12 +122,32 @@ impl Angle{
 
     fn calcAngle(&mut self) -> unit{
         
-        let tan : unit = self.a.slope as unit;
-        let angle: unit = tan.atan2(self.b.slope as unit);
-        self.angle = angle;
-        angle
+        
 
     }
 
 
+}
+
+impl Polygon{
+  
+  fn new(q: Vec<Point>)->Self{
+    let qs = q.len();
+    let mut lines : Vec<Line> = Vec::with_capacity(qs.clone());
+    let mut ang : Vec<Angle> = Vec::with_capacity(qs.clone());
+    for i in 0..(qs-1){
+      
+      lines.push(Line::new(q[i].clone(), q[i+1].clone()));
+      
+    }
+    lines.push(Line::new(q[0].clone(), q[qs-1].clone()));
+    for i in 0..(qs-1){
+      ang.push(Angle::new(lines[i].clone(), lines[i+1].clone()).unwrap());
+    }
+    ang.push(Angle::new(lines[0].clone(), lines[qs-1].clone()).unwrap());
+    Self{points: q, lines: lines, angles: ang, center: Point{x:0_f64,y:0_f64}}
+  }
+  
+  
+  
 }
