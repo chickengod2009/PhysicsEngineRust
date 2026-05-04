@@ -1,0 +1,33 @@
+# Rust
+target/
+**/.vscode/
+*.class
+*.dll
+bin/
+/target/
+Cargo.lock
+
+# Java
+*.class
+*.jar
+
+# Native builds
+*.dll
+*.exe
+*.so
+*.dylib
+*.lib
+*.pdb
+
+# VS Code (ignore everything)
+**/.vscode/
+
+# Keep only workspace settings if you want (optional)
+#!.vscode/settings.json
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Misc
+*.log
