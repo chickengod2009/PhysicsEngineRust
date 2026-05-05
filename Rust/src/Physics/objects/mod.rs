@@ -4,7 +4,6 @@ use crate::Physics::{Energy::{kinetic::KE, mechanical::ME}, force::forceing::For
 pub mod polygons;
 pub struct Object{
 
-    energy : ME,
     kinetic : KE,
     all_forces: Vec<Force>,
     momentum: LinearMomentum,
@@ -23,3 +22,27 @@ pub struct Object{
 
 
 }
+
+impl Object{
+
+/*
+	fn new(body: Polygon, mas: unit, rig: bool, col: bool) -> Self{
+    	let pass = Self{
+            
+            kinetic: KE{},
+            all_forces : Vec::new()::<Force>,
+            momentum : LinearMomentum: 0,
+            momentum_rot : RotationalMomentum 0,
+            easy_access_dir : None,
+            easy_acces_dir : None,
+    		net_force : Force::new(blank),
+    		com: Point,
+    		moment_inertia: Area^3/12*mas,
+
+    		central_mass: mas,
+    		rigid: rig,
+    		collidable: col,
+    		body: body
+            
+    }
+*/    
