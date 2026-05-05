@@ -22,7 +22,7 @@ pub struct Line{
     slope: unit,
     k: u64,
     is_vert: bool,
-    ang_to_vert: unit
+    angle_to_horz: unit
 }
 pub struct Ray{
     a:Point, dir:unit
@@ -31,7 +31,7 @@ pub struct Angle{
     a:Line,b:Line,
     shared_point: Point,
     angle: unit,
-    angle_to_vert: unit
+    angle_to_horz: unit
 }
 
 pub struct Polygon{
@@ -53,7 +53,7 @@ impl Point{
 }
 impl Line {
     pub fn new(a: Point, b: Point) -> Self{
-        let mut h =Self { a:a, b:b, slope:0 as unit, k: 0, is_vert:false, ang_to_vert: 0 as unit};
+        let mut h =Self { a:a, b:b, slope:0 as unit, k: 0, is_vert:false, angle_to_horz: 0 as unit};
         h.calc_slope();
         h
     }
@@ -86,7 +86,7 @@ impl Line {
         }
         let slope: unit = x/y;
 
-        self.ang_to_vert = y.atan2(x);
+        self.angle_to_horz = y.atan2(x);
         
         
 
@@ -107,7 +107,7 @@ impl Clone for Point{
 impl Clone for Line{
   fn clone(&self)->Self{
     
-    Self{a:self.a.clone(), b:self.b.clone(), slope:self.slope, is_vert:self.is_vert,k:self.k, ang_to_vert:self.ang_to_vert}
+    Self{a:self.a.clone(), b:self.b.clone(), slope:self.slope, is_vert:self.is_vert,k:self.k, angle_to_horz:self.angle_to_horz}
     
   }
 }
@@ -116,7 +116,7 @@ impl Angle{
     fn new(a: Line, b: Line)->Option<Self>{
 
         if let Some(g) = a.connected(&b){
-            let mut g: Angle =Self{a:a,b:b, shared_point: g, angle: 0 as unit, angle_to_vert:0 as unit };
+            let mut g: Angle =Self{a:a,b:b, shared_point: g, angle: 0 as unit, angle_to_horz:0 as unit };
             g.calcAngle();
             Some(g)
         }else{
@@ -128,15 +128,43 @@ impl Angle{
 
     fn calcAngle(&mut self) -> unit{
         
-        self.angle = f64::abs(self.b.ang_to_vert-self.a.ang_to_vert);
-        self.angle_to_vert = -(self.b.ang_to_vert+self.a.ang_to_vert);
-        self.angle = self.angle*180_f64/f64::consts::PI;
-        self.angle_to_vert = self.angle_to_vert*180_f64/f64::consts::PI;
+        let mut a = self.a.angle_to_horz*180 as unit/f64::consts::PI;
+        let mut b = self.b.angle_to_horz*180 as unit/f64::consts::PI;
+
+        let diff = (b - a).abs();
+
+
+        
+
+
+        self.angle_to_horz = Self::signed_angle_deg(a, b);
+
+
+        self.angle = diff.min(360.0 - diff);
+
         self.angle
 
 
         
 
+    }
+    fn signed_angle_deg(a: f64, b: f64) -> f64 {
+        let a_rad = a.to_radians();
+        let b_rad = b.to_radians();
+
+    // Unit vectors
+        let ax = a_rad.cos();
+        let ay = a_rad.sin();
+
+        let bx = b_rad.cos();
+        let by = b_rad.sin();
+
+    // Dot and cross
+        let dot = ax * bx + ay * by;
+        let cross = ax * by - ay * bx;
+
+    // Signed angle in degrees
+        cross.atan2(dot).to_degrees()
     }
 
 
@@ -176,6 +204,30 @@ impl Polygon{
 
 impl Display for Angle{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}, vert :{}", self.angle, self.angle_to_vert)
+        write!(f, "{}, vert :{}", self.angle, self.angle_to_horz)
     }
+}
+
+
+impl Polygon{
+
+    fn collision(&self, ot: &Self) -> Option<Point>{
+
+        for i in self.points.iter(){
+
+            let rayline: Line = Line::new(i.clone(), Point { x: i.x.clone()+1000 as unit, y: i.y.clone() });
+
+            for q in self.lines.iter(){
+                if let Some(a) = rayline.  {
+                    
+                }
+            }
+
+
+        }
+
+        None
+    }
+
+
 }
