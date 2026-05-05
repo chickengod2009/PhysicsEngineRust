@@ -80,11 +80,14 @@ impl Line {
     fn calc_slope(&mut self)->Option<unit>{
         let x: unit = self.b.x-self.a.x;
         let y:unit = self.b.y-self.a.y;
-        if y.abs() <= 1e-8 as unit{
+        if x.abs() <= 1e-8 as unit{
             self.is_vert =true;
+            self.slope =0;
+            self.k =self.b.x;
             return None;
         }
-        let slope: unit = x/y;
+        let slope: unit = y/x;
+        self.k = y-x*slope;
 
         self.angle_to_horz = y.atan2(x);
         
@@ -131,7 +134,7 @@ impl Line {
         let gr: f64 = ot.k-self.k;
         let go: f64 = gr/go;  
         if go>= self.a.x.min(self.b.x) && go<= self.b.x.max(self.a.x) && go>= ot.a.x.min(ot.b.x) && go<= ot.b.x.max(ot.b.x){
-            return Some(Point::new(go, go*self.slope));
+            return Some(Point::new(go, go*self.slope+self.k));
         }
         None    
 
@@ -175,6 +178,8 @@ impl Angle{
         let mut b = self.b.angle_to_horz*180 as unit/f64::consts::PI;
 
         let diff = (b - a).abs();
+
+         
 
 
         
@@ -224,11 +229,11 @@ impl Polygon{
       lines.push(Line::new(q[i].clone(), q[i+1].clone()));
       
     }
-    lines.push(Line::new(q[0].clone(), q[qs-1].clone()));
+    lines.push(Line::new(q[qs-1].clone(), q[0].clone()));
     for i in 0..(qs-1){
       ang.push(Angle::new(lines[i].clone(), lines[i+1].clone()).unwrap());
     }
-    ang.push(Angle::new(lines[0].clone(), lines[qs-1].clone()).unwrap());
+    ang.push(Angle::new(lines[qs-1].clone(), lines[0].clone()).unwrap());
     Self{points: q, lines: lines, angles: ang, center: Point{x:0_f64,y:0_f64}}
   }
   
@@ -262,17 +267,17 @@ impl Polygon{
 
             let rayline: Line = Line::new(i.clone(), Point { x: i.x.clone()+1000 as unit, y: i.y.clone() });
 
-            for q in self.lines.iter(){
+            for q in ot.lines.iter(){
                 if let Some(_a) = rayline.pass_through(q) {
                     l+=1;
-                    if q.slope==0 as unit{
+                    if q.slope.abs() <=1e-8 as unit{
                         l+=1;
                     }
                 }
                 
 
             }
-            if l%2==0{
+            if l%2!=0{
                 return Some(i.clone());
             }
 
