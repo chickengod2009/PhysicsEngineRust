@@ -1,3 +1,6 @@
+use core::f64;
+use std::fmt::{Display, write};
+
 use crate::Physics::unit;
 //type unit = f64;
 fn main(){
@@ -27,7 +30,8 @@ pub struct Ray{
 pub struct Angle{
     a:Line,b:Line,
     shared_point: Point,
-    angle: unit
+    angle: unit,
+    angle_to_vert: unit
 }
 
 pub struct Polygon{
@@ -43,12 +47,12 @@ impl PartialEq for Point{
     }
 }
 impl Point{
-  fn new(d: f64, b: f64) ->Self{
+  pub fn new(d: f64, b: f64) ->Self{
     Self{x:d, y:b}
   }
 }
 impl Line {
-    fn new(a: Point, b: Point) -> Self{
+    pub fn new(a: Point, b: Point) -> Self{
         let mut h =Self { a:a, b:b, slope:0 as unit, k: 0, is_vert:false, ang_to_vert: 0 as unit};
         h.calc_slope();
         h
@@ -81,6 +85,8 @@ impl Line {
             return None;
         }
         let slope: unit = x/y;
+
+        self.ang_to_vert = y.atan2(x);
         
         
 
@@ -101,7 +107,7 @@ impl Clone for Point{
 impl Clone for Line{
   fn clone(&self)->Self{
     
-    Self{a:self.a.clone(), b:self.b.clone(), slope:self.slope, is_vert:self.is_vert,k:self.k}
+    Self{a:self.a.clone(), b:self.b.clone(), slope:self.slope, is_vert:self.is_vert,k:self.k, ang_to_vert:self.ang_to_vert}
     
   }
 }
@@ -110,7 +116,7 @@ impl Angle{
     fn new(a: Line, b: Line)->Option<Self>{
 
         if let Some(g) = a.connected(&b){
-            let mut g: Angle =Self{a:a,b:b, shared_point: g, angle: 0 as unit };
+            let mut g: Angle =Self{a:a,b:b, shared_point: g, angle: 0 as unit, angle_to_vert:0 as unit };
             g.calcAngle();
             Some(g)
         }else{
@@ -122,6 +128,13 @@ impl Angle{
 
     fn calcAngle(&mut self) -> unit{
         
+        self.angle = f64::abs(self.b.ang_to_vert-self.a.ang_to_vert);
+        self.angle_to_vert = -(self.b.ang_to_vert+self.a.ang_to_vert);
+        self.angle = self.angle*180_f64/f64::consts::PI;
+        self.angle_to_vert = self.angle_to_vert*180_f64/f64::consts::PI;
+        self.angle
+
+
         
 
     }
@@ -131,7 +144,7 @@ impl Angle{
 
 impl Polygon{
   
-  fn new(q: Vec<Point>)->Self{
+  pub fn new(q: Vec<Point>)->Self{
     let qs = q.len();
     let mut lines : Vec<Line> = Vec::with_capacity(qs.clone());
     let mut ang : Vec<Angle> = Vec::with_capacity(qs.clone());
@@ -150,4 +163,19 @@ impl Polygon{
   
   
   
+}
+impl Polygon{
+
+
+    pub fn angles_by_ref(&self) -> &Vec<Angle>{
+        &self.angles
+    }
+
+
+}
+
+impl Display for Angle{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}, vert :{}", self.angle, self.angle_to_vert)
+    }
 }

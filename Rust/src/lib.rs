@@ -63,48 +63,6 @@ pub extern "system" fn Java_App_doSomething(
     }
 
 }
-fn main(){
 
-    println!("k");
-    let mut g : Var<usize, 5>= Var::new(5);
-    g.set(0, 55_f64).expect("k");
-    g.set(1, 4_f64).expect("l");
-
-    let l=g.get(0).expect("k").unwrap();
-
-    for i in g{
-        if let Some(a) =i{
-            println!("{}", a);
-        }else{
-            println!("None");
-        }
-    }
-
-
-    let bb : Force = Var::new(ForceIndex::A);
-
-    let q: Vec<Point> = vec![Point::new(0_f64,0_f64),Point::new(0_f64,4_f64),Point::new(4_f64,4_f64),Point::new(4_f64,0_f64)];
-
-    let gio = Polygon::new(q);
-
-    for i in gio.angles_by_ref().iter(){
-        println!("{}", &i);
-    }
-
-    
-
-
-    
-
-
-}
-// [lib]
-// crate-type = ["cdylib"]
-//java "-Djava.library.path=." App
-
-impl index_get for usize{
-    fn as_usize(&self)-> usize {
-        *self
-    }
-}
-
+//[lib]
+//crate-type = ["cdylib"]
