@@ -20,7 +20,7 @@ pub struct Point{
 pub struct Line{
     a:Point, b:Point,
     slope: unit,
-    k: u64,
+    k: unit,
     is_vert: bool,
     angle_to_horz: unit
 }
@@ -53,7 +53,7 @@ impl Point{
 }
 impl Line {
     pub fn new(a: Point, b: Point) -> Self{
-        let mut h =Self { a:a, b:b, slope:0 as unit, k: 0, is_vert:false, angle_to_horz: 0 as unit};
+        let mut h =Self { a:a, b:b, slope:0 as unit, k: 0 as unit, is_vert:false, angle_to_horz: 0 as unit};
         h.calc_slope();
         h
     }
@@ -92,6 +92,49 @@ impl Line {
 
         self.slope=slope;
         Some(slope)
+
+    }
+
+
+    fn pass_through(&self, ot: &Self ) -> Option<Point>{
+
+        if self.is_vert && ot.is_vert {
+            if self.k != ot.k{
+                return None;
+            }
+            else{
+                if self.a.y != ot.a.y{
+                    return Some(self.a.clone());
+                }else if self.a.y != ot.b.y{
+                    return Some(self.a.clone());
+                }else if self.b.y != ot.b.y{
+                    return Some(self.b.clone());
+                }else if self.b.y != ot.a.y{
+                    return Some(self.b.clone());
+                }else {return None;}
+            }
+            
+            
+        }
+        if self.slope == ot.slope{
+                if self.a.x != ot.a.x{
+                    return Some(self.a.clone());
+                }else if self.a.x != ot.b.x{
+                    return Some(self.a.clone());
+                }else if self.b.x != ot.b.x{
+                    return Some(self.b.clone());
+                }else if self.b.x != ot.a.x{
+                    return Some(self.b.clone());
+                }else {return None;}
+            }
+        let go: f64 = self.slope-ot.slope;
+        let gr: f64 = ot.k-self.k;
+        let go: f64 = gr/go;  
+        if go>= self.a.x.min(self.b.x) && go<= self.b.x.max(self.a.x) && go>= ot.a.x.min(ot.b.x) && go<= ot.b.x.max(ot.b.x){
+            return Some(Point::new(go, go*self.slope));
+        }
+        None    
+
 
     }
 
@@ -213,18 +256,30 @@ impl Polygon{
 
     fn collision(&self, ot: &Self) -> Option<Point>{
 
+
         for i in self.points.iter(){
+            let mut l: u16=0; 
 
             let rayline: Line = Line::new(i.clone(), Point { x: i.x.clone()+1000 as unit, y: i.y.clone() });
 
             for q in self.lines.iter(){
-                if let Some(a) = rayline.  {
-                    
+                if let Some(_a) = rayline.pass_through(q) {
+                    l+=1;
+                    if q.slope==0 as unit{
+                        l+=1;
+                    }
                 }
+                
+
+            }
+            if l%2==0{
+                return Some(i.clone());
             }
 
 
         }
+
+        
 
         None
     }
