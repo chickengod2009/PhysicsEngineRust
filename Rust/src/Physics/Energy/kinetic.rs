@@ -25,19 +25,24 @@ impl KE{
         self.value = vel*vel*self.mass*(.5 as unit);
         self
     }
+    fn change_mass(&mut self, mas: unit) -> unit{
+    	self.mass = mas;
+        self.value = vel*vel*self.mass*(.5 as unit);
+        self.mass.clone()
+    }
     fn change_vel(&mut self, vel:unit) -> unit{
     	self.velocity = vel;
         self.value = vel*vel*self.mass*(.5 as unit);
-        self.velocity
+        self.velocity.clone()
     }
     fn mass(&self) -> unit{
-        self.mass.copy()
+        self.mass.clone()
     }
     fn velocity(&self) -> unit{
-        self.velocity.copy()
+        self.velocity.clone()
     }
     fn value(&self)->unit{
-        self.value.copy()
+        self.value.clone()
     }
     
         
