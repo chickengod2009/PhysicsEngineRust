@@ -119,7 +119,7 @@ impl Line {
             
             
         }
-        if self.slope == ot.slope{
+        if (self.slope -ot.slope).abs() <= 1e-8_f64{
                 if self.a.x != ot.a.x{
                     return Some(self.a.clone());
                 }else if self.a.x != ot.b.x{
@@ -133,7 +133,7 @@ impl Line {
         let go: f64 = self.slope-ot.slope;
         let gr: f64 = ot.k-self.k;
         let go: f64 = gr/go;  
-        if go>= self.a.x.min(self.b.x) && go<= self.b.x.max(self.a.x) && go>= ot.a.x.min(ot.b.x) && go<= ot.b.x.max(ot.b.x){
+        if go>= self.a.x.min(self.b.x) && go<= self.b.x.max(self.a.x) && go>= ot.a.x.min(ot.b.x) && go<= ot.a.x.max(ot.b.x){
             return Some(Point::new(go, go*self.slope+self.k));
         }
         None    
@@ -283,6 +283,36 @@ impl Polygon{
 
 
         }
+
+        for i in ot.points.iter(){
+              let mut l: u16=0; 
+
+              let rayline: Line = Line::new(i.clone(), Point { x: i.x.clone()+1000 as unit, y: i.y.clone() });
+
+              for q in self.lines.iter(){
+                  if let Some(_a) = rayline.pass_through(q) {
+                      l+=1;
+                      if q.slope.abs() <=1e-8 as unit{
+                          l+=1;
+                      }
+                  }
+                
+
+              }
+              if l%2!=0{
+                  return Some(i.clone());
+              }
+
+
+        }
+        let q=0;
+        for i in self.lines.iter(){
+
+          if let Some(A) =i.pass_through(&ot.lines[0]){
+            return Some(A);
+          }  
+        }    
+
 
         
 
