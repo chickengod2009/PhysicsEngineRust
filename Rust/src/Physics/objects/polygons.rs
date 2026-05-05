@@ -82,7 +82,7 @@ impl Line {
         let y:unit = self.b.y-self.a.y;
         if x.abs() <= 1e-8 as unit{
             self.is_vert =true;
-            self.slope =0;
+            self.slope =0 as unit;
             self.k =self.b.x;
             return None;
         }

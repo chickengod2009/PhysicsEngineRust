@@ -7,13 +7,16 @@ use crate::Physics::{Vector, force::variable::ForceIndex, unit};
 pub type Force = Var<ForceIndex, 7>;
 
 impl Force{
-    fn new_force()->Self{
-        Self{
+    pub fn new_force(mass : unit)->Self{
+        let mut s =Self{
             index: ForceIndex::A,
             elements: [None; 7],
             where_i: 0,
             size :7
-        }
+        };
+        s.set(ForceIndex::M, mass);
+        s
+
     }
 
     

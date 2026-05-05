@@ -7,18 +7,48 @@ pub type LinearMomentum = Var<LinVar, 7>;
 
 impl LinearMomentum{
 
-    fn create()->Self{
+    pub fn create()->Self{
         Self { index: LinVar::M, elements: [None;7], where_i: 0, size: 7 }
     }
 
+    pub fn with_mass(mut self, mass: unit)->Self{
+        self.set(LinVar::M, mass).expect("Linear momenta with_mass");
+        self
+    }
+
+    pub fn with_vx(mut self, velx: unit) -> Self{
+        self.set(LinVar::Vx, velx).expect("Linear momenta with_vx");
+        self
+    }
+    pub fn with_vy(mut self, vely: unit) -> Self{
+        self.set(LinVar::Vy, vely).expect("Linear momenta with_vy");
+        self
+    }
+    pub fn with_p(mut self, momenta: unit) -> Self{
+        self.set(LinVar::P, momenta).expect("Linear momenta with_p");
+        self
+    }
+    pub fn with_px(mut self, momentax: unit) -> Self{
+        self.set(LinVar::Px, momentax).expect("Linear momenta with_px");
+        self
+    }
+    pub fn with_v(mut self, vel: unit) -> Self{
+        self.set(LinVar::V, vel).expect("Linear momenta with_v");
+        self
+    }
+    pub fn with_py(mut self, momentay: unit) -> Self{
+        self.set(LinVar::Py, momentay).expect("Linear momenta with_py");
+        self
+    }
+
     
-    fn calc_v(&mut self) -> Result<unit, LinErr>{
+    pub fn calc_v(&mut self) -> Result<unit, LinErr>{
         todo!()
     }
-    fn calc_vx(&mut self) -> Result<unit, LinErr>{
+    pub fn calc_vx(&mut self) -> Result<unit, LinErr>{
         todo!()
     }
-    fn calc_vy(&mut self) -> Result<unit, LinErr>{
+    pub fn calc_vy(&mut self) -> Result<unit, LinErr>{
         todo!()
     }
 

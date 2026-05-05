@@ -13,35 +13,35 @@ pub struct KE{
 //f
 
 impl KE{
-	fn new(mas: unit) -> Self{
+	pub fn new(mas: unit) -> Self{
         Self{
             mass: mas,
             value: 0 as unit,
             velocity: 0 as unit
             }
     }
-    fn with_vel(mut self, vel: unit) -> Self{
+    pub fn with_vel(mut self, vel: unit) -> Self{
     	self.velocity = vel;
-        self.value = vel*vel*self.mass*(.5 as unit);
+        self.value = vel*vel*self.mass*(0.5);
         self
     }
-    fn change_mass(&mut self, mas: unit) -> unit{
+    pub fn change_mass(&mut self, mas: unit) -> unit{
     	self.mass = mas;
-        self.value = vel*vel*self.mass*(.5 as unit);
+        self.value = self.velocity*self.velocity*self.mass*(0.5 as unit);
         self.mass.clone()
     }
-    fn change_vel(&mut self, vel:unit) -> unit{
+    pub fn change_vel(&mut self, vel:unit) -> unit{
     	self.velocity = vel;
-        self.value = vel*vel*self.mass*(.5 as unit);
+        self.value = vel*vel*self.mass*(0.5 as unit);
         self.velocity.clone()
     }
-    fn mass(&self) -> unit{
+    pub fn mass(&self) -> unit{
         self.mass.clone()
     }
-    fn velocity(&self) -> unit{
+    pub fn velocity(&self) -> unit{
         self.velocity.clone()
     }
-    fn value(&self)->unit{
+    pub fn value(&self)->unit{
         self.value.clone()
     }
     

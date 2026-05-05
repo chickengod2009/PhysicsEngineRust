@@ -1,7 +1,7 @@
 use std::{clone, fmt::{Debug, write}};
 
 use super::unit;
-
+#[derive(Clone)]
 pub struct Var<T:index_get, const N:usize>
 where T:Clone{
 
@@ -64,7 +64,7 @@ where T:index_get, T:Clone{
             self.where_i =0;
             None
         }else{
-            let h = Some(self.elements[self.where_i]);
+            let h = Some(self.elements[self.where_i].clone());
             self.where_i = self.where_i+1;
             h
             
@@ -78,3 +78,4 @@ impl Debug for VarErr {
         write!(f, "There was an error")
     }
 }
+
