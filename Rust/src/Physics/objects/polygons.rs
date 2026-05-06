@@ -39,6 +39,7 @@ pub struct Polygon{
     lines: Vec<Line>,
     angles: Vec<Angle>,
     center: Point,
+    area: Option<unit>
 }
 
 impl PartialEq for Point{
@@ -234,7 +235,9 @@ impl Polygon{
       ang.push(Angle::new(lines[i].clone(), lines[i+1].clone()).unwrap());
     }
     ang.push(Angle::new(lines[qs-1].clone(), lines[0].clone()).unwrap());
-    Self{points: q, lines: lines, angles: ang, center: Point{x:0_f64,y:0_f64}}
+    let ret =Self{points: q, lines: lines, angles: ang, center: Point{x:0_f64,y:0_f64}, area: None};
+    //ret.area();
+    ret
   }
   
   
@@ -318,6 +321,26 @@ impl Polygon{
 
         None
     }
+    
+    pub fn area(&mut self)->unit{
+      if let None = self.area{
+      	let mut pos :unit= 0 as unit;
+      	let mut neg:unit =0 as unit;
+      	let len = self.points.len();
+  			for i in 0..(len){
+        	let wrap = (i+1)%len;
+        	pos+= self.points[i].x*self.points[wrap].y;
+        	neg += self.points[wrap].x*self.points[i].y;
+      	}
+      
+      	let sum = ((pos-neg).abs())/(2.0 as unit);
+        self.area = Some(sum);
+      }
+          
+      self.area.unwrap()
+      
+      
+            
 
-
+		}
 }
