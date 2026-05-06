@@ -22,11 +22,11 @@ pub trait index_get{
 
 impl<T:index_get, const N:usize> Var<T,N>
 where T:Clone{
-    pub fn is_safe(&self, inde : T) ->bool{
-        inde.as_usize()<= N
+    pub fn is_safe(&self, inde : usize) ->bool{
+        inde<= N
     }
     pub fn get(&self, inde : T)->Result<Option<unit>, VarErr>{
-        if !self.is_safe(inde.clone()){return Err(VarErr);}
+        if !self.is_safe(inde.as_usize()){return Err(VarErr);}
         
         Ok(self.elements[inde.as_usize()])
     }
