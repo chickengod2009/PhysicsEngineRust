@@ -327,7 +327,7 @@ impl Polygon{
       	let mut pos :unit= 0 as unit;
       	let mut neg:unit =0 as unit;
       	let len = self.points.len();
-  			for i in 0..(len){
+  		for i in 0..(len){
         	let wrap = (i+1)%len;
         	pos+= self.points[i].x*self.points[wrap].y;
         	neg += self.points[wrap].x*self.points[i].y;
@@ -342,5 +342,5 @@ impl Polygon{
       
             
 
-		}
+	}
 }
