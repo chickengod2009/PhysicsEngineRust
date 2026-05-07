@@ -30,21 +30,30 @@ impl RotationalMomentum{
 
     
     fn calc_w(&mut self) -> Result<unit, RotErr>{
-        todo!()
+        let o: Option<unit> = None;
+        o = self[RotVar::L].copied().zip(self[RotVar::I]).map(
+        		|(l,i)| -> unit{
+          	      self.x_over_y(l,i)
+            	}
+            );
+        if let Some(a) = o{
+            self.set(RotVar::W, a);
+            return Ok(a);
+        }            
+        
+        Err(RotErr{})
+                
     }
-    fn calc_wx(&mut self) -> Result<unit, RotErr>{
+    fn cacl_rot_moment(&mut self)-> Result<unit, RotErr>{
         todo!()
-    }
-    fn calc_wy(&mut self) -> Result<unit, RotErr>{
-        todo!()
-    }
+     }   
 
     
 
 }
 
 pub struct RotErr;
-
+/*
 impl Vector for RotationalMomentum {
     type Output=unit;
 
@@ -81,4 +90,4 @@ impl Vector for RotationalMomentum {
     fn calc_angle(&mut self) -> Result<Self::Output, Self::Error> {
         todo!()
     }
-}
+}*/
