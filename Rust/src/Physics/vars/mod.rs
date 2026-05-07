@@ -52,6 +52,23 @@ where T:Clone{
         self.elements[j.as_usize()] = Some(i);
         Ok(self.elements[j.as_usize()])
     }
+    
+    pub(in super::super)fn solve_pyth(&self, a: unit, b:unit){
+        (a*a+y*y).sqrt()
+     }
+    pub(in super::super)fn solve_over_cos(&self, a:unit, b:unit){
+        //let x = self[LineVar::Vy].unwrap();
+        let ang = b*(3.14 as unit)/180 as unit;
+		(x)/(b.cos())
+    }
+    pub(in super::super)fn solve_over_sin(&self, a:unit, b:unit){
+        //let x = self[LineVar::Vy].unwrap();
+        let ang = b*(3.14 as unit)/180 as unit;
+		(x)/(b.cos())
+    }
+    pub(in super::super)fn x_over_y(&self, a:unit, b:unit){
+        a/b
+    }    
 
     
 }
