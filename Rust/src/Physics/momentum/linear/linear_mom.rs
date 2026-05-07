@@ -2,13 +2,13 @@ use crate::Physics::{Vector, momentum::linear::var::LinVar, unit, vars::Var};
 
 
 
-pub type LinearMomentum = Var<LinVar, 7>;
+pub type LinearMomentum = Var<LinVar, 8>;
 
 
 impl LinearMomentum{
 
     pub fn create()->Self{
-        Self { index: LinVar::M, elements: [None;7], where_i: 0, size: 7 }
+        Self { index: LinVar::M, elements: [None;8], where_i: 0, size: 8 }
     }
 
     pub fn with_mass(mut self, mass: unit)->Self{
@@ -43,13 +43,27 @@ impl LinearMomentum{
 
     
     pub fn calc_v(&mut self) -> Result<unit, LinErr>{
-        let o : Option<unit> = None;
+        let mut o : Option<unit> = None;
         if self.can_I_solve(&[LinVar::Vx,LinVar::Vy]){
-            o =Some((a*a+b*b).sqrt());
+            let x = self[LineVar::Vx].unwrap();
+            let y = self[LineVar::Vy].unwrap();
+            
+            o =Some(x*x+y*y).sqrt());
             
             
-        } else {
-            
+        } else if self.can_I_solve(&[LinVar::Vx, LinVar::Ang]){
+        	let x = self[LineVar::Vx].unwrap();
+            let ang = self[LineVar::Ang].unwrap()*(3.14 as unit)/180 as unit;
+            o = Some((x)/(ang.cos());
+        } else if self.can_I_solve(&[LinVar::Vy, LinVar::Ang]){
+        	let x = self[LineVar::Vy].unwrap();
+            let ang = self[LineVar::Ang].unwrap()*(3.14 as unit)/180 as unit;
+            o = Some((x)/(ang.sin());
+        } else if self.can_I_solve(&[LinVar::M, LinVar::P]){
+        	let p = self[LineVar::P].unwrap();
+            let m = self[LineVar::M].unwrap();
+            o = Some(p/m);
+        }    
         if let Some(a) = o{
             self.set(LinVar::V, a);
             return Some(a);
