@@ -41,6 +41,17 @@ where T:Clone{
         };
         Some(true)
     }
+    pub fn can_I_solve_vec(&self, oh: Vec<T> ) -> Option<bool>{
+        for i in oh{
+            if i.as_usize()>=N {return None;}
+            match self.elements[i.as_usize()] {
+                None => {return Some(false);},
+                Some(_a) => {continue;}
+            }
+            
+        };
+        Some(true)
+    }
 
     pub fn new(j: T)->Self{
         Self { elements: [None;N], index : j, where_i:0, size: N}
