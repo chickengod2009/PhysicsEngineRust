@@ -23,14 +23,14 @@ pub trait index_get{
 impl<T:index_get, const N:usize> Var<T,N>
 where T:Clone{
     pub fn is_safe(&self, inde : usize) ->bool{
-        inde<= N
+        inde< N
     }
     pub fn get(&self, inde : T)->Result<Option<unit>, VarErr>{
         if !self.is_safe(inde.as_usize()){return Err(VarErr);}
         
         Ok(self.elements[inde.as_usize()])
     }
-    pub fn can_I_solve<const l: usize>(&self, oh: [T; l] ) -> Option<bool>{
+    pub fn can_I_solve(&self, oh: &[T] ) -> Option<bool>{
         for i in oh{
             if i.as_usize()>=N {return None;}
             match self.elements[i.as_usize()] {
@@ -41,17 +41,7 @@ where T:Clone{
         };
         Some(true)
     }
-    pub fn can_I_solve_vec(&self, oh: Vec<T> ) -> Option<bool>{
-        for i in oh{
-            if i.as_usize()>=N {return None;}
-            match self.elements[i.as_usize()] {
-                None => {return Some(false);},
-                Some(_a) => {continue;}
-            }
-            
-        };
-        Some(true)
-    }
+    
 
     pub fn new(j: T)->Self{
         Self { elements: [None;N], index : j, where_i:0, size: N}
