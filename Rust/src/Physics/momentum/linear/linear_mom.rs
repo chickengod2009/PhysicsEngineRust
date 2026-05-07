@@ -44,6 +44,22 @@ impl LinearMomentum{
     
     pub fn calc_v(&mut self) -> Result<unit, LinErr>{
         let mut o : Option<unit> = None;
+        
+        o = self[LinVar::Vx].copied().zip(self[LinVar::Vy).map(
+                |x, y| self.solve_pyth(x,y)
+                ).or_else(|| 
+                    self[LinVar::Ang].copied().zip(self[LinVar::Vy])
+                    	.map(
+                        	|x,y| self.solve_over_cos(x,y)
+                        	)
+                ).or_else(
+                    || 
+                    	self[LinVar::Ang].copied().zip(self[LinVar::Vx])
+                    	.map(
+                        	|x,y| /*logic*/ 0
+                        	)
+                );
+                
         if self.can_I_solve(&[LinVar::Vx,LinVar::Vy]){
             let x = self[LineVar::Vx].unwrap();
             let y = self[LineVar::Vy].unwrap();
@@ -52,9 +68,10 @@ impl LinearMomentum{
             
             
         } else if self.can_I_solve(&[LinVar::Vx, LinVar::Ang]){
-        	let x = self[LineVar::Vx].unwrap();
-            let ang = self[LineVar::Ang].unwrap()*(3.14 as unit)/180 as unit;
-            o = Some((x)/(ang.cos());
+        	o = self[LinVar::Vx].zip(self[LinVar::Vy).copied().map(
+                |x, y| (x*x)+(y*y)
+                );
+                
         } else if self.can_I_solve(&[LinVar::Vy, LinVar::Ang]){
         	let x = self[LineVar::Vy].unwrap();
             let ang = self[LineVar::Ang].unwrap()*(3.14 as unit)/180 as unit;
@@ -80,6 +97,8 @@ impl LinearMomentum{
     pub fn calc_vy(&mut self) -> Result<unit, LinErr>{
         todo!()
     }
+    
+               
 
     
 
