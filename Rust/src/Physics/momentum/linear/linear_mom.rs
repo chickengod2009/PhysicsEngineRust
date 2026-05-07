@@ -43,7 +43,22 @@ impl LinearMomentum{
 
     
     pub fn calc_v(&mut self) -> Result<unit, LinErr>{
-        todo!()
+        let o : Option<unit> = None;
+        if let Some(a) =self.get(LinVar::Vx).expect("46 lin") && Some(b) = self.get(LineVar::Vx).expect("46b Lin"){
+            o =Some((a*a+b*b).sqrt());
+            
+            
+        } else if let Some(a) = self.get(LinVar::Vx).expect("51 lin"){
+            
+        if let Some(a) = o{
+            self.set(LinVar::V, a);
+            return Some(a);
+        }    
+                
+        
+        Err(LinErr{})        
+            
+            
     }
     pub fn calc_vx(&mut self) -> Result<unit, LinErr>{
         todo!()
