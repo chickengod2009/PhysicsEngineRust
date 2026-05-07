@@ -64,11 +64,18 @@ where T:Clone{
     pub(in super::super)fn solve_over_sin(&self, a:unit, b:unit){
         //let x = self[LineVar::Vy].unwrap();
         let ang = b*(3.14 as unit)/180 as unit;
-		(x)/(b.cos())
+		(x)/(b.sin())
     }
     pub(in super::super)fn x_over_y(&self, a:unit, b:unit){
         a/b
+    }  
+    pub(in super::super)fn x_times_y(&self, a:unit, b:unit){
+        a*b
     }    
+    pub(in super::super)fn rev_pyth(&self, mag:unit, other:unit){
+        if mag<other { panic!();}
+        (mag*mag-other*other).sqrt()
+    }  
 
     
 }
