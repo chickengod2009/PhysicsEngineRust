@@ -1,4 +1,5 @@
 use std::{clone, fmt::{Debug, write}};
+use std::ops::{Index, IndexMut};
 
 use super::unit;
 #[derive(Clone)]
@@ -80,3 +81,13 @@ impl Debug for VarErr {
     }
 }
 
+impl<T,const N: usize> Index for Var<T,N> 
+where T:Clone+index_get{
+	type Output = Option<unit>;
+	fn index(&self, index: T) -> &Self::Output{
+    	if !self.is_safe(index.to_usize()){
+        	panic!("Out of bounds!!!")
+        }
+        &self.elements[index.to_usize())
+    }
+}                
