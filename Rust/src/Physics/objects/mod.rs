@@ -26,7 +26,7 @@ pub struct Object{
 impl Object{
 
 
-	fn new(body: Polygon, mas: unit, rig: bool, col: bool) -> Self{
+	pub fn new(body: Polygon, mas: unit, rig: bool, col: bool) -> Self{
     	let pass = Self{
             
             kinetic: KE::new(mas),
@@ -44,9 +44,9 @@ impl Object{
     		collidable: col,
     		body: body
             
-    };
+        };
 
-    pass
+        pass
   
     }
 

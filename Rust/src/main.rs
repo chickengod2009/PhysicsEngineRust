@@ -4,6 +4,7 @@ use jni::sys::{jint, jlong};
 
 mod Physics;
 use crate::Physics::force::{variable::ForceIndex, forceing::Force};
+use crate::Physics::objects::Object;
 use crate::Physics::objects::polygons::{Point, Polygon};
 use crate::Physics::vars::*;
 
@@ -90,6 +91,8 @@ fn main(){
     for i in gio.angles_by_ref().iter(){
         println!("{}", &i);
     }
+
+    let bm = Object::new(gio, 50 as f64, true, true);
 
     
 

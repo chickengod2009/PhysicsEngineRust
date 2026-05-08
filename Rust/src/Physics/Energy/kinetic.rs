@@ -44,6 +44,16 @@ impl KE{
     pub fn value(&self)->unit{
         self.value.clone()
     }
+
+    pub fn calc(&mut self)->unit{
+        self.value = self.velocity*self.velocity*self.mass*(0.5 as unit);
+        self.value.clone()
+    }
+    pub fn calc_new_v(&mut self, vel: unit) -> unit{
+        self.velocity=vel;
+        self.value = vel*vel*self.mass*(0.5 as unit);
+        self.value.clone()
+    }
     
         
 
