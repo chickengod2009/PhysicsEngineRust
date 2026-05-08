@@ -3,7 +3,7 @@ use crate::Physics::{Energy::{kinetic::KE, mechanical::ME}, force::forceing::For
 
 pub mod polygons;
 pub struct Object{
-    
+    id: i32,
     kinetic : KE,
     all_forces: Vec<Force>,
     momentum: LinearMomentum,
@@ -27,12 +27,18 @@ pub struct Object{
 
 
 }
-
+static mut amount: unit =0;
 impl Object{
 
 
-	pub fn new(body: Polygon, mas: unit, rig: bool, col: bool) -> Self{
+	pub fn new(body: &Polygon, mas: unit, rig: bool, col: bool) -> Self{
+        unsafe{
+            count+=1;
+        }    
+                
     	let pass = Self{
+            
+            id : unsafe{count},
             
             kinetic: KE::new(mas),
             all_forces : Vec::new(),
@@ -49,7 +55,7 @@ impl Object{
     		collidable: col,
     		body: body.clone(),
             temp_force: None,
-            prev_bod: body,
+            prev_bod: body.clone(),
             prev_tran2d: Translation2d::new(0,0),
     		prev_rot_sin_cos: RotSinCos::new(Rotational::new(0))
             
@@ -67,3 +73,9 @@ impl Object{
 
 }   
 
+
+impl Hash for Object {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+    }
+}
