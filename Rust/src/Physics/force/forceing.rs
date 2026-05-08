@@ -1,4 +1,4 @@
-use core::f64;
+.use core::f64;
 use std::{fmt::Debug, ops::Add};
 
 use super::super::vars::Var;
@@ -324,14 +324,11 @@ impl Force{
             }
         );
         if let Some(a) = res{
-            self.set(ForceIndex::Ax, a);
+            self.set(ForceIndex::Ay, a);
             return Ok(a);
         }
 
         Err(ForceErr)
-    }
-    fn calc_acc_ang(& mut self ) -> Result<unit, ForceErr>{
-        todo!()
     }
 
 }
