@@ -18,7 +18,10 @@ pub struct Object{
     collidable:bool,
     body: Polygon,
     temp_force: Option<Force>,
-    prev_bod: Polygon
+    prev_bod: Polygon,
+    prev_tran2d: Translation2d,
+    prev_rot_sin_cos: RotSinCos
+    
 
 
 
@@ -46,12 +49,21 @@ impl Object{
     		collidable: col,
     		body: body.clone(),
             temp_force: None,
-            prev_bod: body
+            prev_bod: body,
+            prev_tran2d: Translation2d::new(0,0),
+    		prev_rot_sin_cos: RotSinCos::new(Rotational::new(0))
             
         };
 
         pass
   
-    }
+	}
+    
+    
+    
+    pub fn apply_v_to_trans2d(& mut self){
+        
+    }    
 
 }   
+
