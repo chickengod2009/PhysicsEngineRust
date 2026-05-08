@@ -1,4 +1,4 @@
-.use core::f64;
+use core::f64;
 use std::{fmt::Debug, ops::Add};
 
 use super::super::vars::Var;
