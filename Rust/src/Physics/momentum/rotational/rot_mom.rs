@@ -30,14 +30,14 @@ impl RotationalMomentum{
 
     
     fn calc_w(&mut self) -> Result<unit, RotErr>{
-        let o: Option<unit> = None;
-        o = self[RotVar::L].copied().zip(self[RotVar::I]).map(
+        
+        let o = self[RotVar::L].clone().zip(self[RotVar::I]).map(
         		|(l,i)| -> unit{
           	      self.x_over_y(l,i)
             	}
             );
         if let Some(a) = o{
-            self.set(RotVar::W, a);
+            self.set(RotVar::W, a).expect("40 rot_mom");
             return Ok(a);
         }            
         

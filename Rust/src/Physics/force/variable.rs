@@ -2,7 +2,7 @@ use crate::Physics::vars::index_get;
 
 pub enum ForceIndex{
 
-    F,A,M,Fx,Fy,Ax,Ay
+    F,A,M,Fx,Fy,Ax,Ay, Ang
 
 
 }
@@ -17,7 +17,8 @@ impl index_get for ForceIndex{
             &ForceIndex::Ay=> 4,
             &ForceIndex::Fx=> 5,
             &ForceIndex::Fy=> 6,
-        }
+            &ForceIndex::Ang => 7,
+            }
     }
 }
 impl Clone for ForceIndex {
@@ -30,6 +31,7 @@ impl Clone for ForceIndex {
             &ForceIndex::Ay=> ForceIndex::Ay,
             &ForceIndex::Fx=> ForceIndex::Fx,
             &ForceIndex::Fy=> ForceIndex::Fy,
+            &ForceIndex::Ang=> ForceIndex::Ang,
         }
     }
 }

@@ -1,5 +1,5 @@
 use core::f64;
-use std::fmt::{Display, write};
+use std::{fmt::{Display, write}, ops::{Add, AddAssign}};
 
 use crate::Physics::unit;
 //type unit = f64;
@@ -27,13 +27,14 @@ pub struct Line{
 pub struct Ray{
     a:Point, dir:unit
 }
+#[derive(Clone)]
 pub struct Angle{
     a:Line,b:Line,
     shared_point: Point,
     angle: unit,
     angle_to_horz: unit
 }
-
+#[derive(Clone)]
 pub struct Polygon{
     points: Vec<Point>,
     lines: Vec<Line>,
@@ -343,4 +344,73 @@ impl Polygon{
             
 
 	}
+
+
+    pub fn translation(&mut self, trans: Tanslation2d){
+        for i in self.points.iter_mut(){
+        
+            i.add_assign(&trans);
+        }
+        for i in self.lines.iter_mut(){
+            i.add_assign(&trans);
+        }
+        for i in self.angles.iter_mut(){
+            i.add_assign(&trans);
+            
+            
+        }
+        
+    }
+    pub fn rotation(&mut self, trans: Rotational2d ){
+
+    }
+
+
+
+}
+
+
+
+#[derive(Clone)]
+pub struct Rotational2d{
+    clockwise: unit
+}
+
+
+
+
+#[derive(Clone,Debug,PartialEq)]
+pub struct Tanslation2d{
+    x: unit,
+    y: unit
+}
+
+impl Add<&Tanslation2d> for Point{
+    type Output = Self;
+
+    fn add(self, rhs: &Tanslation2d) -> Self::Output {
+        
+        Self{x: self.x+rhs.x, y: self.y+rhs.y}
+        
+    }
+
+}
+impl AddAssign<&Tanslation2d> for Point {
+    fn add_assign(&mut self, rhs: &Tanslation2d) {
+        self.x+= rhs.x;
+        self.y+=rhs.y;
+    }
+}
+impl AddAssign<&Tanslation2d> for Line {
+    fn add_assign(&mut self, rhs: &Tanslation2d) {
+        self.a.add_assign(rhs);
+        self.b.add_assign(rhs);
+    }
+}
+impl AddAssign<&Tanslation2d> for Angle {
+    fn add_assign(&mut self, rhs: &Tanslation2d) {
+        self.a.add_assign(rhs);
+        self.b.add_assign(rhs);
+        self.shared_point.add_assign(rhs);
+    }
 }

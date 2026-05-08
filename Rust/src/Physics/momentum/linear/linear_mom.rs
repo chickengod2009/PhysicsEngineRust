@@ -45,24 +45,24 @@ impl LinearMomentum{
     pub fn calc_v(&mut self) -> Result<unit, LinErr>{
         let mut o : Option<unit> = None;
         
-        o = self[LinVar::Vx].copied().zip(self[LinVar::Vy].copied()).map(
+        o = self[LinVar::Vx].clone().zip(self[LinVar::Vy].clone()).map(
                 |(x, y)| self.solve_pyth(x,y)
                 ).or_else(|| -> Option<unit>{
-                    self[LinVar::Ang].copied().zip(self[LinVar::Vx].copied())
+                    self[LinVar::Ang].clone().zip(self[LinVar::Vx].clone())
                     	.map(
                         |(ang,x)| -> unit{ self.x_over_cos(x,ang)}
                         	)
                      }       
                 ).or_else(
                     || -> Option<unit>{
-                    	self[LinVar::Ang].copied().zip(self[LinVar::Vy].copied())
+                    	self[LinVar::Ang].clone().zip(self[LinVar::Vy].clone())
                     	.map(
                         |(ang,y)| -> unit{self.y_over_sin(y,ang)}
                         	)
                       }      
                 ).or_else(
                     ||-> Option<unit>{
-                    	self[LinVar::M].copied().zip(self[LinVar::P].copied())
+                    	self[LinVar::M].clone().zip(self[LinVar::P].clone())
                         .map(
                             |(m, p)| ->unit{self.x_over_y(p,m)}
                             )
@@ -84,21 +84,21 @@ impl LinearMomentum{
     pub fn calc_vx(&mut self) -> Result<unit, LinErr>{
         let mut o : Option<unit> = None;
         
-        o = self[LinVar::V].copied().zip(self[LinVar::Vy]).map(
-            	|(v, y)| -> Option<unit>{
+        o = self[LinVar::V].clone().zip(self[LinVar::Vy]).map(
+            	|(v, y)| -> unit{
              	   self.rev_pyth(v,y)
             	}
             ).or_else(
                 || -> Option<unit>{
-                    self[LinVar::V].copied().zip(self[LinVar::Ang]).map(
+                    self[LinVar::V].clone().zip(self[LinVar::Ang]).map(
                         |(v, ang)| -> unit{
-                            self.x_times_cos(v, ang)
+                            self.mag_times_cos(v, ang)
                         }
                     )
                  }
             ).or_else(
                 || -> Option<unit>{
-                    self[LinVar::M].copied().zip(self[LinVar::Px]).map(
+                    self[LinVar::M].clone().zip(self[LinVar::Px]).map(
                         |(m, px)| -> unit{
                             self.x_over_y(px, m)
                         }
@@ -120,21 +120,21 @@ impl LinearMomentum{
     pub fn calc_vy(&mut self) -> Result<unit, LinErr>{
         let mut o : Option<unit> = None;
         
-        o = self[LinVar::V].copied().zip(self[LinVar::Vx]).map(
-            	|(v, x)| -> Option<unit>{
+        o = self[LinVar::V].clone().zip(self[LinVar::Vx]).map(
+            	|(v, x)| -> unit{
              	   self.rev_pyth(v,x)
             	}
             ).or_else(
                 || -> Option<unit>{
-                    self[LinVar::V].copied().zip(self[LinVar::Ang]).map(
+                    self[LinVar::V].clone().zip(self[LinVar::Ang]).map(
                         |(v, ang)| -> unit{
-                            self.x_times_sin(v, ang)
+                            self.mag_times_sin(v, ang)
                         }
                     )
                  }
             ).or_else(
                 || -> Option<unit>{
-                    self[LinVar::M].copied().zip(self[LinVar::Py]).map(
+                    self[LinVar::M].clone().zip(self[LinVar::Py]).map(
                         |(m, py)| -> unit{
                             self.x_over_y(py, m)
                         }
@@ -145,7 +145,7 @@ impl LinearMomentum{
             
         if let Some(a) = o{
             self.set(LinVar::Vy, a);
-            return Some(a);
+            return Ok(a);
         }    
                 
         
@@ -182,21 +182,21 @@ impl Vector for LinearMomentum{
     fn calc_x(&mut self) -> Result<Self::Output, Self::Error> {
         let mut o : Option<unit> = None;
         
-        o = self[LinVar::P].copied().zip(self[LinVar::Py]).map(
-            	|(v, y)| -> Option<unit>{
+        o = self[LinVar::P].clone().zip(self[LinVar::Py]).map(
+            	|(v, y)| -> unit{
              	   self.rev_pyth(v,y)
             	}
             ).or_else(
                 || -> Option<unit>{
-                    self[LinVar::P].copied().zip(self[LinVar::Ang]).map(
+                    self[LinVar::P].clone().zip(self[LinVar::Ang]).map(
                         |(v, ang)| -> unit{
-                            self.x_times_cos(v, ang)
+                            self.mag_times_cos(v, ang)
                         }
                     )
                  }
             ).or_else(
                 || -> Option<unit>{
-                    self[LinVar::M].copied().zip(self[LinVar::Px]).map(
+                    self[LinVar::M].clone().zip(self[LinVar::Px]).map(
                         |(m, px)| -> unit{
                             self.x_times_y(px, m)
                         }
@@ -216,23 +216,23 @@ impl Vector for LinearMomentum{
     }
 
     fn calc_y(&mut self) -> Result<Self::Output, Self::Error> {
-        let mut o : Option<unit> = None;
         
-        o = self[LinVar::P].copied().zip(self[LinVar::Px]).map(
-            	|(v, x)| -> Option<unit>{
+        
+        let o: Option<f64> = self[LinVar::P].clone().zip(self[LinVar::Px]).map(
+            	|(v, x)| -> unit{
              	   self.rev_pyth(v,x)
             	}
             ).or_else(
                 || -> Option<unit>{
-                    self[LinVar::P].copied().zip(self[LinVar::Ang]).map(
+                    self[LinVar::P].clone().zip(self[LinVar::Ang]).map(
                         |(v, ang)| -> unit{
-                            self.x_times_sin(v, ang)
+                            self.mag_times_sin(v, ang)
                         }
                     )
                  }
             ).or_else(
                 || -> Option<unit>{
-                    self[LinVar::M].copied().zip(self[LinVar::Vy]).map(
+                    self[LinVar::M].clone().zip(self[LinVar::Vy]).map(
                         |(m, py)| -> unit{
                             self.x_times_y(py, m)
                         }
@@ -254,24 +254,24 @@ impl Vector for LinearMomentum{
     fn calc_mag(&mut self) -> Result<Self::Output, Self::Error> {
         let mut o : Option<unit> = None;
         
-        o = self[LinVar::Px].copied().zip(self[LinVar::Py].copied()).map(
+        o = self[LinVar::Px].clone().zip(self[LinVar::Py].clone()).map(
                 |(x, y)| self.solve_pyth(x,y)
                 ).or_else(|| -> Option<unit>{
-                    self[LinVar::Ang].copied().zip(self[LinVar::Px].copied())
+                    self[LinVar::Ang].clone().zip(self[LinVar::Px].clone())
                     	.map(
                         |(ang,x)| -> unit{ self.x_over_cos(x,ang)}
                         	)
                      }       
                 ).or_else(
                     || -> Option<unit>{
-                    	self[LinVar::Ang].copied().zip(self[LinVar::Py].copied())
+                    	self[LinVar::Ang].clone().zip(self[LinVar::Py].clone())
                     	.map(
                         |(ang,y)| -> unit{self.y_over_sin(y,ang)}
                         	)
                       }      
                 ).or_else(
                     ||-> Option<unit>{
-                    	self[LinVar::M].copied().zip(self[LinVar::V].copied())
+                    	self[LinVar::M].clone().zip(self[LinVar::V].clone())
                         .map(
                             |(m, p)| ->unit{self.x_times_y(p,m)}
                             )
@@ -296,6 +296,51 @@ impl Vector for LinearMomentum{
     }
 
     fn calc_angle(&mut self) -> Result<Self::Output, Self::Error> {
-        todo!()
+        let res : Option<unit> = self[LinVar::Px].clone().zip(self[LinVar::Py].clone()).map(
+            |(x,y)| -> unit{
+                y.atan2(x)
+            }
+        ).or_else(
+            || -> Option<unit>{
+                self[LinVar::P].clone().zip(self[LinVar::Px].clone()).map(
+                    |(f,fx)| -> unit{
+                        (fx/f).acos()
+                    }
+                )
+            }
+        ).or_else(
+            || -> Option<unit>{
+                self[LinVar::P].clone().zip(self[LinVar::Py].clone()).map(
+                    |(f,fy)| -> unit{
+                        (fy/f).acos()
+                    }
+                )
+            }
+        ).or_else(
+            || -> Option<unit>{
+                self[LinVar::V].clone().zip(self[LinVar::Vx].clone()).map(
+                    |(f,fx)| -> unit{
+                        (fx/f).acos()
+                    }
+                )
+            }
+        ).or_else(
+            || -> Option<unit>{
+                self[LinVar::V].clone().zip(self[LinVar::Vy].clone()).map(
+                    |(f,fy)| -> unit{
+                        (fy/f).acos()
+                    }
+                )
+            }
+        );
+
+        if let Some(a) = res{
+            let ang = (a*(180 as unit))/(std::f64::consts::PI);
+            self.set(LinVar::Ang, ang);
+            return Ok(ang);
+        }
+
+        Err(LinErr)
+    
     }
 }

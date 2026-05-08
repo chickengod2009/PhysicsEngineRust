@@ -53,28 +53,38 @@ where T:Clone{
         Ok(self.elements[j.as_usize()])
     }
     
-    pub(in super::super)fn solve_pyth(&self, a: unit, b:unit){
-        (a*a+y*y).sqrt()
+    pub(in super::super)fn solve_pyth(&self, x: unit, y:unit)-> unit{
+        (x*x+y*y).sqrt()
      }
-    pub(in super::super)fn solve_over_cos(&self, a:unit, b:unit){
+    pub(in super::super)fn x_over_cos(&self, x:unit, b:unit)-> unit{
         //let x = self[LineVar::Vy].unwrap();
         let ang = b*(3.14 as unit)/180 as unit;
-		(x)/(b.cos())
+		(x)/(ang.cos())
     }
-    pub(in super::super)fn solve_over_sin(&self, a:unit, b:unit){
+    pub(in super::super)fn y_over_sin(&self, y:unit, angle:unit)-> unit{
         //let x = self[LineVar::Vy].unwrap();
-        let ang = b*(3.14 as unit)/180 as unit;
-		(x)/(b.sin())
+        let ang = angle*(3.14 as unit)/180 as unit;
+		(y)/(ang.sin())
     }
-    pub(in super::super)fn x_over_y(&self, a:unit, b:unit){
+    pub(in super::super)fn x_over_y(&self, a:unit, b:unit) -> unit{
         a/b
     }  
-    pub(in super::super)fn x_times_y(&self, a:unit, b:unit){
+    pub(in super::super)fn x_times_y(&self, a:unit, b:unit)-> unit{
         a*b
     }    
-    pub(in super::super)fn rev_pyth(&self, mag:unit, other:unit){
+    pub(in super::super)fn rev_pyth(&self, mag:unit, other:unit)-> unit{
         if mag<other { panic!();}
         (mag*mag-other*other).sqrt()
+    }
+    pub(in super::super)fn mag_times_cos(&self, x:unit, b:unit)-> unit{
+        //let x = self[LineVar::Vy].unwrap();
+        let ang = b*(3.14 as unit)/180 as unit;
+		(x)*(ang.cos())
+    }
+    pub(in super::super)fn mag_times_sin(&self, y:unit, angle:unit)-> unit{
+        //let x = self[LineVar::Vy].unwrap();
+        let ang = angle*(3.14 as unit)/180 as unit;
+		(y)*(ang.sin())
     }  
 
     
@@ -105,13 +115,13 @@ impl Debug for VarErr {
     }
 }
 
-impl<T,const N: usize> Index for Var<T,N> 
+impl<T,const N: usize> Index<T> for Var<T,N> 
 where T:Clone+index_get{
 	type Output = Option<unit>;
-	fn index(&self, index: T) -> &Self::Output{
-    	if !self.is_safe(index.to_usize()){
-        	panic!("Out of bounds!!!")
-        }
-        &self.elements[index.to_usize())
+    
+	fn index(&self, index: T) -> &Self::Output {
+        let g = index.as_usize();
+        if g>=N {return &None;}
+        &self.elements[g] 
     }
 }                

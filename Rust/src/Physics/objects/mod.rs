@@ -16,7 +16,9 @@ pub struct Object{
     central_mass: unit,
     rigid:bool,
     collidable:bool,
-    body: Polygon
+    body: Polygon,
+    temp_force: Option<Force>,
+    prev_bod: Polygon
 
 
 
@@ -42,7 +44,9 @@ impl Object{
     		central_mass: mas,
     		rigid: rig,
     		collidable: col,
-    		body: body
+    		body: body.clone(),
+            temp_force: None,
+            prev_bod: body
             
         };
 
