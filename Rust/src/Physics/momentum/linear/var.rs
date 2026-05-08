@@ -9,7 +9,8 @@ pub enum LinVar{
     M,
     P,
     Px,
-    Py
+    Py,
+    Ang
 }
 
 impl Clone for LinVar{
@@ -22,6 +23,8 @@ impl Clone for LinVar{
             &Self::P => Self::P,
             &Self::Px => Self::Px,
             &Self::Py => Self::Py,
+            &Self::Ang => Self::Ang,
+
         }
     }
 }
@@ -36,6 +39,7 @@ impl index_get for LinVar  {
             &Self::P => 4,
             &Self::Px => 5,
             &Self::Py => 6,
+            &Self::Ang => Self::7,
         }
     }
 }
