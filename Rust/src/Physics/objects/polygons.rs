@@ -39,7 +39,7 @@ pub struct Polygon{
     points: Vec<Point>,
     lines: Vec<Line>,
     angles: Vec<Angle>,
-    center: Point,
+    center: Option<unit>,
     area: Option<unit>
 }
 
@@ -236,10 +236,23 @@ impl Polygon{
       ang.push(Angle::new(lines[i].clone(), lines[i+1].clone()).unwrap());
     }
     ang.push(Angle::new(lines[qs-1].clone(), lines[0].clone()).unwrap());
-    let ret =Self{points: q, lines: lines, angles: ang, center: Point{x:0_f64,y:0_f64}, area: None};
+    let ret =Self{points: q, lines: lines, angles: ang, center: None, area: None};
     //ret.area();
+    
     ret
   }
+  
+  pub fn find_cent(&mut self) -> unit{
+  	let x : unit =0;
+    let y: unit =0;
+    let s: unit=self.points.len() as unit;
+    for i in self.points.iter(){
+      x+=i.x;
+      y+=i.y
+    }
+    let ret : Point=Point::new(x/s, y/s)  
+    self.center = Some(ret);
+    ret
   
   
   
@@ -347,6 +360,7 @@ impl Polygon{
 
 
     pub fn translation(&mut self, trans: Tanslation2d){
+      	self.add_assign(&trans);
         for i in self.points.iter_mut(){
         
             i.add_assign(&trans);
@@ -361,8 +375,22 @@ impl Polygon{
         }
         
     }
-    pub fn rotation(&mut self, trans: Rotational2d ){
-
+    pub fn rotation(&mut self, trand: Rotational2d ){
+      	let cent : &Point = &self.center;
+        let trans : RotSinCos = RotSinCos::new(trand);
+        
+				for i in self.points.iter_mut(){
+        
+            i.add_assign((&trans,cent));
+        }
+        for i in self.lines.iter_mut(){
+            i.add_assign((&trans,cent));
+        }
+        for i in self.angles.iter_mut(){
+            i.add_assign((&trans,cent));
+            
+            
+        }
     }
 
 
@@ -373,10 +401,21 @@ impl Polygon{
 
 #[derive(Clone)]
 pub struct Rotational2d{
-    clockwise: unit
+    angle: unit
 }
-
-
+pub struct RotSinCos{
+  	sin : unit,
+    cos : unit
+}
+impl RotSinCos{
+	fn new(deg : Rotational2d) -> Self{
+  	let (sin, cos) = (deg.angle*std::f64::const::PI/(180 as unit)).sin_cos();
+    Self{
+      sin :sin,
+      cos: cos
+    }
+  } 
+}
 
 
 #[derive(Clone,Debug,PartialEq)]
@@ -414,3 +453,31 @@ impl AddAssign<&Tanslation2d> for Angle {
         self.shared_point.add_assign(rhs);
     }
 }
+impl AddAssign<(&RotSinCos, &Point)> for Point {
+    fn add_assign(&mut self, rhs: (&RotSinCos, &Polygon)) {
+      	
+    	let tempx : unit = self.x-rhs.1.x;
+			let tempy : unit = self.y-rhs.1.y;
+      
+      let (sin: unit, cos: unit) = (rhs.0.sin, rhs.0.cos);
+      let newx :unit = tempx*cos-tempy*sin;
+      let newy :unit = tempx*sin+tempy*cos;
+      self.x =  rhs.1.x+newx;
+      self.y = rhs.1.y+newy;
+        
+    }
+}
+impl AddAssign<(&RotSinCos, &Point)> for Line {
+    fn add_assign(&mut self, rhs: (&RotSinCos, &Point)) {
+        self.a.add_assign(rhs);
+        self.b.add_assign(rhs);
+    }
+}
+impl AddAssign<(&RotSinCos, &Point)> for Angle {
+    fn add_assign(&mut self, rhs: (&RotSinCos, &Point)) {
+        self.a.add_assign(rhs);
+        self.b.add_assign(rhs);
+        self.shared_point.add_assign(rhs);
+    }
+}
+
