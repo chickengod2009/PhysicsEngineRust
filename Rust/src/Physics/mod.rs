@@ -19,3 +19,7 @@ pub trait Vector{
     fn get_angle(&mut self) -> Option<Self::Output>;
     fn calc_angle(&mut self) -> Result<Self::Output, Self::Error>;
 }
+
+pub struct Time{
+	time: unit
+}
