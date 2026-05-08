@@ -14,9 +14,11 @@ fn main(){
   
   
 }
+#[derive(PartialEq, Eq)]
 pub struct Point{
     x: unit, y:unit
 }
+#[derive(PartialEq, Eq)]
 pub struct Line{
     a:Point, b:Point,
     slope: unit,
@@ -27,14 +29,14 @@ pub struct Line{
 pub struct Ray{
     a:Point, dir:unit
 }
-#[derive(Clone)]
+#[derive(PartialEq, Eq, Clone)]
 pub struct Angle{
     a:Line,b:Line,
     shared_point: Point,
     angle: unit,
     angle_to_horz: unit
 }
-#[derive(Clone)]
+#[derive(PartialEq, Eq, Clone)]
 pub struct Polygon{
     points: Vec<Point>,
     lines: Vec<Line>,
@@ -43,11 +45,6 @@ pub struct Polygon{
     area: Option<unit>
 }
 
-impl PartialEq for Point{
-    fn eq(&self, other: &Self) -> bool {
-        self.x == other.x && self.y == other.y
-    }
-}
 impl Point{
   pub fn new(d: f64, b: f64) ->Self{
     Self{x:d, y:b}
