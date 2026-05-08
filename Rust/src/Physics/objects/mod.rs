@@ -2,6 +2,7 @@ use crate::Physics::{Energy::{kinetic::KE, mechanical::ME}, force::forceing::For
 
 
 pub mod polygons;
+#[derive(Clone)]
 pub struct Object{
     id: i32,
     kinetic : KE,
@@ -79,3 +80,9 @@ impl Hash for Object {
         self.id.hash(state);
     }
 }
+impl PartialEq for Object {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+impl Eq for Object{}
