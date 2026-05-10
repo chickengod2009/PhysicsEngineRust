@@ -14,11 +14,11 @@ fn main(){
   
   
 }
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq)]
 pub struct Point{
     x: unit, y:unit
 }
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq)]
 pub struct Line{
     a:Point, b:Point,
     slope: unit,
@@ -29,25 +29,31 @@ pub struct Line{
 pub struct Ray{
     a:Point, dir:unit
 }
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub struct Angle{
     a:Line,b:Line,
     shared_point: Point,
     angle: unit,
     angle_to_horz: unit
 }
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub struct Polygon{
     points: Vec<Point>,
     lines: Vec<Line>,
     angles: Vec<Angle>,
-    center: Option<unit>,
+    center: Option<Point>,
     area: Option<unit>
 }
 
 impl Point{
   pub fn new(d: f64, b: f64) ->Self{
     Self{x:d, y:b}
+  }
+  pub fn x(&self)->unit{
+    self.x
+  }
+  pub fn y(&self)-> unit{
+    self.y
   }
 }
 impl Line {
@@ -239,18 +245,36 @@ impl Polygon{
     ret
   }
   
-  pub fn find_cent(&mut self) -> unit{
-  	let x : unit =0;
-    let y: unit =0;
-    let s: unit=self.points.len() as unit;
-    for i in self.points.iter(){
-      x+=i.x;
-      y+=i.y
+    pub fn find_cent_mut(&mut self) -> Point{
+        if self.center.is_none(){
+  	        let mut x : unit =0 as unit;
+            let mut y: unit =0 as unit;
+            let s: unit=self.points.len() as unit;
+            for i in self.points.iter(){
+                x+=i.x;
+                y+=i.y
+            }
+            let ret: Point = Point::new(x/s, y/s);
+            self.center = Some(ret);
+        }
+        self.center.clone().unwrap()
     }
-    let ret : Point=Point::new(x/s, y/s)  
-    self.center = Some(ret);
-    ret
-  
+    pub fn find_cent(&self) -> Point{
+        if self.center.is_none(){
+  	        let mut x : unit =0 as unit;
+            let mut y: unit =0 as unit;
+            let s: unit=self.points.len() as unit;
+            for i in self.points.iter(){
+                x+=i.x;
+                y+=i.y
+            }
+            let ret: Point = Point::new(x/s, y/s);
+            ret
+        }else {
+            self.center.clone().unwrap()
+        }
+        
+    }
   
   
 }
@@ -273,65 +297,70 @@ impl Display for Angle{
 
 impl Polygon{
 
-    fn collision(&self, ot: &Self) -> Option<Point>{
+    pub fn collision(&mut self, ot: &mut Self) -> Option<Collision> {
 
+    let mut smallest_overlap = f64::MAX as unit;
 
-        for i in self.points.iter(){
-            let mut l: u16=0; 
+    let mut smallest_axis = Vect::new(0 as unit, 0 as unit);
 
-            let rayline: Line = Line::new(i.clone(), Point { x: i.x.clone()+1000 as unit, y: i.y.clone() });
+    // test all axes from both polygons
+    for poly in [&self.lines, &ot.lines] {
 
-            for q in ot.lines.iter(){
-                if let Some(_a) = rayline.pass_through(q) {
-                    l+=1;
-                    if q.slope.abs() <=1e-8 as unit{
-                        l+=1;
-                    }
-                }
-                
+        for line in poly.iter() {
 
+            // edge direction
+            let dx = line.b.x - line.a.x;
+            let dy = line.b.y - line.a.y;
+
+            // perpendicular axis
+            let axis = Vect::new(-dy, dx).normalized();
+
+            let (min_a, max_a) = self.project_axis(&axis);
+            let (min_b, max_b) = ot.project_axis(&axis);
+
+            // separating axis found
+            if max_a < min_b || max_b < min_a {
+                return None;
             }
-            if l%2!=0{
-                return Some(i.clone());
+
+            // overlap amount
+            let overlap =
+                unit::min(max_a, max_b)
+                -
+                unit::max(min_a, min_b);
+
+            // smallest overlap determines collision normal
+            if overlap < smallest_overlap {
+
+                smallest_overlap = overlap;
+                smallest_axis = axis;
             }
-
-
         }
-
-        for i in ot.points.iter(){
-              let mut l: u16=0; 
-
-              let rayline: Line = Line::new(i.clone(), Point { x: i.x.clone()+1000 as unit, y: i.y.clone() });
-
-              for q in self.lines.iter(){
-                  if let Some(_a) = rayline.pass_through(q) {
-                      l+=1;
-                      if q.slope.abs() <=1e-8 as unit{
-                          l+=1;
-                      }
-                  }
-                
-
-              }
-              if l%2!=0{
-                  return Some(i.clone());
-              }
-
-
-        }
-        let q=0;
-        for i in self.lines.iter(){
-
-          if let Some(A) =i.pass_through(&ot.lines[0]){
-            return Some(A);
-          }  
-        }    
-
-
-        
-
-        None
     }
+
+    // ensure normal points self -> other
+    let center_dir = Vect::new(
+        ot.find_cent_mut().x - self.find_cent().x,
+        ot.find_cent().y - self.find_cent().y,
+    );
+
+    if center_dir.dot(&smallest_axis) < 0 as unit {
+
+        smallest_axis = smallest_axis * (-1 as unit);
+    }
+
+    // approximate contact point
+    let point = Point::new(
+        (self.find_cent().x + ot.find_cent().x) / 2 as unit,
+        (self.find_cent().y + ot.find_cent().y) / 2 as unit,
+    );
+
+    Some(Collision {
+        point,
+        normal: smallest_axis,
+        depth: smallest_overlap,
+    })
+}
     
     pub fn area(&mut self)->unit{
       if let None = self.area{
@@ -356,8 +385,8 @@ impl Polygon{
 	}
 
 
-    pub fn translation(&mut self, trans: Tanslation2d){
-      	self.add_assign(&trans);
+    pub fn translation(&mut self, trans: Translation2d){
+      	self.find_cent().add_assign(&trans);
         for i in self.points.iter_mut(){
         
             i.add_assign(&trans);
@@ -373,7 +402,7 @@ impl Polygon{
         
     }
     pub fn rotation(&mut self, trand: Rotational2d ){
-      	let cent : &Point = &self.center;
+      	let cent : &Point = &self.find_cent();
         let trans : RotSinCos = RotSinCos::new(trand);
         
 				for i in self.points.iter_mut(){
@@ -389,6 +418,34 @@ impl Polygon{
             
         }
     }
+
+    fn project_axis(&self, axis: &Vect) -> (unit, unit) {
+
+    let mut min =
+        self.points[0].x * axis.x()
+        +
+        self.points[0].y * axis.y();
+
+    let mut max = min;
+
+    for p in self.points.iter() {
+
+        let proj =
+            p.x * axis.x()
+            +
+            p.y * axis.y();
+
+        if proj < min {
+            min = proj;
+        }
+
+        if proj > max {
+            max = proj;
+        }
+    }
+
+    (min, max)
+}
     
     
 
@@ -402,63 +459,74 @@ impl Polygon{
 pub struct Rotational2d{
     angle: unit
 }
+#[derive(Clone)]
 pub struct RotSinCos{
   	sin : unit,
     cos : unit
 }
 impl RotSinCos{
-	fn new(deg : Rotational2d) -> Self{
-  	let (sin, cos) = (deg.angle*std::f64::const::PI/(180 as unit)).sin_cos();
-    Self{
-      sin :sin,
-      cos: cos
+	pub fn new(deg : Rotational2d) -> Self{
+  	    let (sin, cos) = (deg.angle*std::f64::consts::PI/(180 as unit)).sin_cos();
+        Self{
+            sin :sin,
+            cos: cos
+        }
+    } 
+}
+impl Rotational2d{
+    pub fn new(angle : unit) -> Self{
+        Self{angle: angle}
     }
-  } 
 }
 
 
 #[derive(Clone,Debug,PartialEq)]
-pub struct Tanslation2d{
+pub struct Translation2d{
     x: unit,
     y: unit
 }
+impl Translation2d{
+    pub fn new(x: unit, y: unit) -> Self{
+        Self { x:x, y:y }
+    }
+}
 
-impl Add<&Tanslation2d> for Point{
+impl Add<&Translation2d> for Point{
     type Output = Self;
 
-    fn add(self, rhs: &Tanslation2d) -> Self::Output {
+    fn add(self, rhs: &Translation2d) -> Self::Output {
         
         Self{x: self.x+rhs.x, y: self.y+rhs.y}
         
     }
 
 }
-impl AddAssign<&Tanslation2d> for Point {
-    fn add_assign(&mut self, rhs: &Tanslation2d) {
+impl AddAssign<&Translation2d> for Point {
+    fn add_assign(&mut self, rhs: &Translation2d) {
         self.x+= rhs.x;
         self.y+=rhs.y;
     }
 }
-impl AddAssign<&Tanslation2d> for Line {
-    fn add_assign(&mut self, rhs: &Tanslation2d) {
+impl AddAssign<&Translation2d> for Line {
+    fn add_assign(&mut self, rhs: &Translation2d) {
         self.a.add_assign(rhs);
         self.b.add_assign(rhs);
     }
 }
-impl AddAssign<&Tanslation2d> for Angle {
-    fn add_assign(&mut self, rhs: &Tanslation2d) {
+impl AddAssign<&Translation2d> for Angle {
+    fn add_assign(&mut self, rhs: &Translation2d) {
         self.a.add_assign(rhs);
         self.b.add_assign(rhs);
         self.shared_point.add_assign(rhs);
     }
 }
 impl AddAssign<(&RotSinCos, &Point)> for Point {
-    fn add_assign(&mut self, rhs: (&RotSinCos, &Polygon)) {
+    fn add_assign(&mut self, rhs: (&RotSinCos, &Point)) {
       	
     	let tempx : unit = self.x-rhs.1.x;
 			let tempy : unit = self.y-rhs.1.y;
       
-      let (sin: unit, cos: unit) = (rhs.0.sin, rhs.0.cos);
+      let (sin, cos) = (rhs.0.sin, rhs.0.cos);
       let newx :unit = tempx*cos-tempy*sin;
       let newy :unit = tempx*sin+tempy*cos;
       self.x =  rhs.1.x+newx;
@@ -480,3 +548,200 @@ impl AddAssign<(&RotSinCos, &Point)> for Angle {
     }
 }
 
+#[derive(Clone)]
+pub struct Collision {
+    pub point: Point,
+    pub normal: Vect,
+    pub depth: unit,
+}
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Vect {
+    x: unit,
+    y: unit,
+}
+
+impl Vect {
+
+    pub fn new(x: unit, y: unit) -> Self {
+        Self { x, y }
+    }
+
+    // -------------------------
+    // getters
+    // -------------------------
+
+    pub fn x(&self) -> unit {
+        self.x
+    }
+
+    pub fn y(&self) -> unit {
+        self.y
+    }
+
+    // -------------------------
+    // magnitude
+    // -------------------------
+
+    pub fn mag(&self) -> unit {
+
+        (self.x * self.x + self.y * self.y).sqrt()
+    }
+
+    // -------------------------
+    // normalization
+    // -------------------------
+
+    pub fn normalized(&self) -> Self {
+
+        let m = self.mag();
+
+        // avoid divide by zero
+        if m.abs() <= 1e-8 as unit {
+
+            return Self::new(0 as unit, 0 as unit);
+        }
+
+        Self {
+            x: self.x / m,
+            y: self.y / m,
+        }
+    }
+
+    // -------------------------
+    // dot product
+    // -------------------------
+
+    pub fn dot(&self, other: &Self) -> unit {
+
+        self.x * other.x
+        +
+        self.y * other.y
+    }
+
+    // -------------------------
+    // 2D cross product
+    // returns z-component
+    // -------------------------
+
+    pub fn cross(&self, other: &Self) -> unit {
+
+        self.x * other.y
+        -
+        self.y * other.x
+    }
+
+    // -------------------------
+    // perpendicular vector
+    // -------------------------
+
+    pub fn perp(&self) -> Self {
+
+        Self {
+            x: -self.y,
+            y: self.x,
+        }
+    }
+
+    // -------------------------
+    // angle from horizontal
+    // -------------------------
+
+    pub fn angle(&self) -> unit {
+
+        self.y.atan2(self.x)
+    }
+
+    // -------------------------
+    // scalar multiply
+    // -------------------------
+
+    pub fn scale(&self, s: unit) -> Self {
+
+        Self {
+            x: self.x * s,
+            y: self.y * s,
+        }
+    }
+}
+
+// ---------------------------------
+// operators
+// ---------------------------------
+
+use std::ops::{
+    
+    Sub,
+    SubAssign,
+    Mul,
+    Div,
+};
+
+impl Add for Vect {
+
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+
+        Self {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
+    }
+}
+
+impl AddAssign for Vect {
+
+    fn add_assign(&mut self, rhs: Self) {
+
+        self.x += rhs.x;
+        self.y += rhs.y;
+    }
+}
+
+impl Sub for Vect {
+
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+
+        Self {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+        }
+    }
+}
+
+impl SubAssign for Vect {
+
+    fn sub_assign(&mut self, rhs: Self) {
+
+        self.x -= rhs.x;
+        self.y -= rhs.y;
+    }
+}
+
+impl Mul<unit> for Vect {
+
+    type Output = Self;
+
+    fn mul(self, rhs: unit) -> Self::Output {
+
+        Self {
+            x: self.x * rhs,
+            y: self.y * rhs,
+        }
+    }
+}
+
+impl Div<unit> for Vect {
+
+    type Output = Self;
+
+    fn div(self, rhs: unit) -> Self::Output {
+
+        Self {
+            x: self.x / rhs,
+            y: self.y / rhs,
+        }
+    }
+}

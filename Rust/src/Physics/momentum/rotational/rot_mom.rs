@@ -1,52 +1,51 @@
-use crate::Physics::{Vector, momentum::{rotational::var::RotVar}, unit, vars::Var};
+use crate::Physics::{Vector, force::torque::Torque, momentum::rotational::var::RotVar, unit, vars::Var};
 
 
-
-pub type RotationalMomentum = Var<RotVar, 3>;
+#[derive(Clone)]
+pub struct RotationalMomentum{
+    l: unit,
+    i: unit,
+    w: unit
+}
 
 
 impl RotationalMomentum{
 
-    pub fn create()->Self{
-        Self { index: RotVar::I, elements: [None;3], where_i: 0, size: 3 }
-    }
-
-    pub fn with_mass(mut self, mass: unit)->Self{
-        self.set(RotVar::I, mass).expect("Linear momenta with_mass");
-        self
+    pub fn create(moment : unit)->Self{
+        if moment ==0.0{panic!()}
+        Self { l:0.0, i: moment, w: 0.0 }
     }
 
     
+
+    
     pub fn with_l(mut self, momenta: unit) -> Self{
-        self.set(RotVar::L, momenta).expect("Linear momenta with_p");
+        self.l = momenta;
         self
     }
     
     pub fn with_w(mut self, vel: unit) -> Self{
-        self.set(RotVar::W, vel).expect("Linear momenta with_v");
+        self.w= vel;
         self
     }
     
 
     
-    fn calc_w(&mut self) -> Result<unit, RotErr>{
+    fn calc_w(&mut self) {
         
-        let o = self[RotVar::L].clone().zip(self[RotVar::I]).map(
-        		|(l,i)| -> unit{
-          	      self.x_over_y(l,i)
-            	}
-            );
-        if let Some(a) = o{
-            self.set(RotVar::W, a).expect("40 rot_mom");
-            return Ok(a);
-        }            
-        
-        Err(RotErr{})
+        self.w = self.l/self.i;
                 
     }
-    fn cacl_rot_moment(&mut self)-> Result<unit, RotErr>{
-        todo!()
-     }   
+    fn cacl_rot_moment(&mut self){
+        self.l = self.w*self.i;
+    }   
+    pub fn w(&self) -> unit{
+        self.w
+    }
+
+    pub fn impulse(&mut self, torque : &Torque, time : unit){
+        self.w = torque.torque()*time/self.i;
+    }
 
     
 

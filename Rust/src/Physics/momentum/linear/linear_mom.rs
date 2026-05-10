@@ -1,4 +1,4 @@
-use crate::Physics::{Vector, momentum::linear::var::LinVar, unit, vars::Var};
+use crate::Physics::{Vector, force::forceing::Force, momentum::linear::var::LinVar, unit, vars::Var};
 
 
 
@@ -153,9 +153,35 @@ impl LinearMomentum{
             
         
     }
+
+    pub fn apply_impulse_x(&mut self, imp : &Force, time : unit){
+        let impulse = imp.x().unwrap()*time;
+        let change_v = impulse/self.mass().unwrap();
+        let mut v = self.vx().unwrap();
+        v -= change_v;
+        self.set(LinVar::Vx, v);
+    }   
+    pub fn apply_impulse_y(&mut self, imp : &Force, time : unit){
+        let impulse = imp.y().unwrap()*time;
+        let change_v = impulse/self.mass().unwrap();
+        let mut v = self.vy().unwrap();
+        v -= change_v;
+        self.set(LinVar::Vy, v);
+    }   
     
                
 
+    pub fn vx(&self)-> Option<unit>{
+        self[LinVar::Vx].clone()
+    }
+    pub fn vy(&self)-> Option<unit>{
+        self[LinVar::Vy].clone()
+    }pub fn mass(&self) -> Option<unit>{
+        self[LinVar::M].clone()
+    }
+    pub fn v(&self) -> Option<unit>{
+        self[LinVar::V].clone()
+    }
     
 
 }
@@ -167,15 +193,15 @@ impl Vector for LinearMomentum{
 
     type Error = LinErr;
 
-    fn get_x(&mut self)-> Option<Self::Output> {
+    fn x(& self)-> Option<Self::Output> {
         todo!()
     }
 
-    fn get_y(&mut self) -> Option<Self::Output> {
+    fn y(& self) -> Option<Self::Output> {
         todo!()
     }
 
-    fn get_mag(&mut self) -> Option<Self::Output> {
+    fn mag(& self) -> Option<Self::Output> {
         todo!()
     }
 

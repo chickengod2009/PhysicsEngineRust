@@ -124,4 +124,14 @@ where T:Clone+index_get{
         if g>=N {return &None;}
         &self.elements[g] 
     }
+}   
+impl<T,const N: usize> IndexMut<T> for Var<T,N> 
+where T:Clone+index_get{
+
+    
+	fn index_mut(& mut self, index: T) -> &mut Self::Output {
+        let g = index.as_usize();
+        if g>=N {panic!()}
+        &mut self.elements[g] 
+    }
 }                

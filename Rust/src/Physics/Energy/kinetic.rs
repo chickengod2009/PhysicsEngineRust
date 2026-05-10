@@ -1,5 +1,5 @@
 use crate::Physics::unit;
-
+#[derive(Clone)]
 pub struct KE{
 
 

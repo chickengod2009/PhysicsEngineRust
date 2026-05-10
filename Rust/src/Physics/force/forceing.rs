@@ -1,9 +1,9 @@
 use core::f64;
-use std::{fmt::Debug, ops::Add};
+use std::{fmt::Debug, ops::{Add, AddAssign}};
 
 use super::super::vars::Var;
 
-use crate::Physics::{Vector, force::variable::ForceIndex, unit, vars::index_get};
+use crate::Physics::{Vector, force::variable::ForceIndex, objects::polygons::Point, unit, vars::index_get};
 
 pub type Force = Var<ForceIndex, 8>;
 
@@ -20,35 +20,42 @@ impl Force{
 
     }
 
+    pub fn inverse(mut self) -> Self{
+        self.set(ForceIndex::Ang, self[ForceIndex::Ang].unwrap() + 180 as unit);
+        self
+    }
+
     
 }
 
-impl Add for Force{
-    fn add(self, rhs: Self) -> Self::Output {
-        Self{
-            index: ForceIndex::A,
-            elements: {
-                let mut lg: [Option<unit>; 8] = [None; 8];
-                for i in 0..8{
-                    if let Some(a) =rhs.elements[i] && let Some(b) = self.elements[i] {
-                        lg[i] = Some(a+b);
-                    } else if let Some(a) = rhs.elements[i]{
-                        lg[i] = Some(a);
-                    } else if let Some(a) = self.elements[i]{
-                        lg[i] = Some(a);
-                    }
-                };
-
-                lg
-
-            },
-            where_i:0,
-            size :5
-
-        }
+impl AddAssign<&Force> for Force{
+    fn add_assign(&mut self, rhs: &Self) {
+        self[ForceIndex::Ax] = self[ForceIndex::Ax].zip(rhs[ForceIndex::Ax]).map(
+            |(x,xx)| -> unit{
+                x+xx
+            }
+        );
+        self[ForceIndex::Ay] = self[ForceIndex::Ay].zip(rhs[ForceIndex::Ay]).map(
+            |(x,xx)| -> unit{
+                x+xx
+            }
+        );
+        self[ForceIndex::Fx] = self[ForceIndex::Fx].zip(rhs[ForceIndex::Fx]).map(
+            |(x,xx)| -> unit{
+                x+xx
+            }
+        );
+        self[ForceIndex::Fy] = self[ForceIndex::Fy].zip(rhs[ForceIndex::Fy]).map(
+            |(x,xx)| -> unit{
+                x+xx
+            }
+        );
+        self.calc_mag().expect("48 forceing");
+        self.calc_acc().expect("49 forceing");
+        self.calc_angle().expect("50 forceing");
     }
     
-    type Output= Force;
+    
 }
 
 impl Vector for Force {
@@ -56,15 +63,15 @@ impl Vector for Force {
 
     type Error = ForceErr;
 
-    fn get_x(&mut self)-> Option<Self::Output> {
+    fn x(&self)-> Option<Self::Output> {
         self.elements[ForceIndex::Fx.as_usize()]
     }
 
-    fn get_y(&mut self) -> Option<Self::Output> {
+    fn y(&self) -> Option<Self::Output> {
         self.elements[ForceIndex::Fy.as_usize()]
     }
 
-    fn get_mag(&mut self) -> Option<Self::Output> {
+    fn mag(&self) -> Option<Self::Output> {
         self.elements[ForceIndex::F.as_usize()]
     }
 
@@ -331,4 +338,52 @@ impl Force{
         Err(ForceErr)
     }
 
+}
+
+#[derive(Clone)]
+pub struct TempForce{
+    force: Force,
+    frames_left : i32,
+    must_be_called_off: bool,
+    point : Point
+}
+impl TempForce{
+    pub fn new(force: Force, frames: i32, kill: bool, point : Point) -> Self{
+        Self{
+            force: force,
+            frames_left:frames,
+            must_be_called_off: kill,
+            point: point
+        }
+    }
+
+    pub fn tick(&mut self)-> Option<i32>{
+        if self.must_be_called_off{
+            return None;
+        }
+        self.frames_left-=1;
+        if self.frames_left <=0{
+            
+            return Some(0);
+        }
+        return Some(self.frames_left);
+    }
+    pub fn must_be_called_off(&self) -> bool{
+        self.must_be_called_off
+    }
+    pub fn call_off(&mut self){
+        self.frames_left=0;
+    }
+   
+    pub fn frames_left(&self)-> Option<i32>{
+        if self.must_be_called_off{
+            return None;
+        }
+        
+        
+        return Some(self.frames_left);
+    }
+    pub fn force(&self) -> &Force{
+        &self.force
+    }
 }

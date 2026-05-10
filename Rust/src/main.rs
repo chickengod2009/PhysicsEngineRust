@@ -92,7 +92,7 @@ fn main(){
         println!("{}", &i);
     }
 
-    let bm = Object::new(gio, 50 as f64, true, true);
+    //let bm = Object::new(gio, 50 as f64, true, true);
 
     
 
