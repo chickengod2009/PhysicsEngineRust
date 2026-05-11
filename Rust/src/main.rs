@@ -10,7 +10,7 @@ fn main() {
        .with_inner_size(winit::dpi::LogicalSize::new(800.0, 600.0))
        .build(&event_loop)
        .unwrap();
-   event_loop.run(move |event, _, control_flow| {
+   event_loop.run(move |event: Event<'_, ()>, _, control_flow: &mut ControlFlow| {
        *control_flow = ControlFlow::Wait;
        if let Event::WindowEvent { event, .. } = event {
            if let WindowEvent::CloseRequested = event {
