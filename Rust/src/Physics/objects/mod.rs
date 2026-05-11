@@ -213,7 +213,7 @@ impl TempAction {
    }
 }
 
-
+/*
 impl Ord for TempAction{
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.partial_cmp(other).unwrap()
@@ -251,3 +251,4 @@ impl PartialOrd for TempAction {
     }
     
 }
+*/
