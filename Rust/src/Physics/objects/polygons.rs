@@ -748,3 +748,27 @@ impl Div<unit> for Vect {
         }
     }
 }
+impl From<self::&Point> for iced::Point{
+
+	fn from(p : &Point)-> iced::Point{
+    iced::Point::new(p.x(), p.y())
+  }  
+
+}
+
+impl Polygon{
+
+	fn draw(&self, frame: & mut canvas::Frame){
+		let path : Path = Path::build(|builder| {
+      if let Some(first) = self.points.first() {
+          builder.move_to(*iced::Point::from(&first));
+          for p in &self.points[1..] {
+             builder.line_to(*iced::Point::from(*p));
+          }
+          builder.close();
+      }
+    });
+    frame.fill(&path, self.color); 
+  }  
+
+}

@@ -13,9 +13,6 @@ pub struct Object{
     momentum_rot: RotationalMomentum,
     net_force : Force,
     com: Point,
-    moment_inertia: unit,
-    easy_access_vel : Option<unit>,
-    easy_access_dir: Option<unit>,
     central_mass: unit,
     non_moving:bool,
     collidable:bool,
@@ -41,14 +38,10 @@ impl Object{
             
             kinetic: KE::new(mas),
             all_forces : Vec::new(),
-            momentum : LinearMomentum::create().with_mass(mas),
+            momentum : LinearMomentum::create().set_all_to_zero().with_mass(mas),
             momentum_rot : RotationalMomentum::create(mas),
-            easy_access_dir : None,
-            easy_access_vel : None,
     		net_force : Force::new_force(mas),
     		com: body.find_cent(),
-    		moment_inertia: 0.0,
-
     		central_mass: mas,
     		non_moving: rig,
     		collidable: col,
@@ -139,9 +132,13 @@ impl Object{
         
         
     }
-    pub fn collide(&mut self, other : &mut Object){let k: f64 = 0.005 as unit;
+    pub fn collide(&mut self, other : &mut Object){
+		
         let damp_cof = 0.80 as unit;
         let k: f64 = 0.005 as unit;
+		if !self.collidable || !other.collidable{
+			return;
+		}	
         
         if let Some(a) = self.body.collision(&mut other.body){
             let vec : Vect  = Vect::new(self.momentum.vx().unwrap(), self.momentum.vy().unwrap());
@@ -174,7 +171,7 @@ impl Object{
         let r = Vect::new((self.com.x()-temp.point().x()), (self.com.y()-temp.point().y()));
         let tor : Torque = Torque::new_with_force(temp.force().clone(), r, self.moment_inertia);
         self.all_forces.push(TempAction::new(temp, tor));
-        self.all_forces.sort();
+        
     }
     pub fn com(&self)-> Point{
         self.com.clone()
@@ -216,7 +213,7 @@ impl TempAction {
    }
 }
 
-
+/*
 impl Ord for TempAction{
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.partial_cmp(other).unwrap()
@@ -254,3 +251,4 @@ impl PartialOrd for TempAction {
     }
     
 }
+*/
