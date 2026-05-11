@@ -87,6 +87,13 @@ where T:Clone{
 		(y)*(ang.sin())
     }  
 
+	pub (in super::super) fn set_all_zero(mut self) -> Self{
+		for i in self.elements.iter_mut(){
+			i = Some(0)
+		}
+		self
+	}	
+
     
 }
 
