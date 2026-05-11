@@ -3,7 +3,7 @@ use std::{fmt::Debug, ops::{Add, AddAssign}};
 
 use super::super::vars::Var;
 
-use crate::Physics::{Vector, force::variable::ForceIndex, objects::polygons::Point, unit, vars::index_get};
+use crate::Physics::{Vector, force::variable::ForceIndex, objects::polygons::{Point, Vect}, unit, vars::index_get};
 
 pub type Force = Var<ForceIndex, 8>;
 
@@ -374,6 +374,9 @@ impl TempForce{
     pub fn call_off(&mut self){
         self.frames_left=0;
     }
+    pub fn point(&self)-> &Point{
+        &self.point
+    }
    
     pub fn frames_left(&self)-> Option<i32>{
         if self.must_be_called_off{
@@ -385,5 +388,53 @@ impl TempForce{
     }
     pub fn force(&self) -> &Force{
         &self.force
+    }
+}
+impl Ord for TempForce{
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.partial_cmp(other).unwrap()
+    }
+}
+impl PartialEq for TempForce{
+    fn eq(&self, other: &Self) -> bool {
+        self.frames_left == other.frames_left
+    }
+}
+impl Eq for TempForce {
+    
+}
+impl PartialOrd for TempForce {
+    fn ge(&self, other: &Self) -> bool {
+        self.frames_left>= other.frames_left
+    }
+    fn gt(&self, other: &Self) -> bool {
+        self.frames_left> other.frames_left
+    }
+    fn le(&self, other: &Self) -> bool {
+        self.frames_left<= other.frames_left
+    }
+    fn lt(&self, other: &Self) -> bool {
+        self.frames_left < other.frames_left
+    }
+    
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        
+        match self.frames_left.partial_cmp(&other.frames_left) {
+            Some(core::cmp::Ordering::Equal) => {Some(std::cmp::Ordering::Equal)}
+            ord => return ord,
+        }
+        
+    }
+    
+}
+impl From<Vect> for Force{
+    fn from(value: Vect) -> Self {
+        let mut ret : Force =Force::new_force(1.0);
+        ret[ForceIndex::F] = Some(value.mag());
+        ret[ForceIndex::Ang] = Some(value.angle());
+        ret[ForceIndex::Fx] = Some(value.x());
+        ret[ForceIndex::Fy] = Some(value.y());
+        ret
+
     }
 }

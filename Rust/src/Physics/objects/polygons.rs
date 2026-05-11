@@ -244,6 +244,9 @@ impl Polygon{
     
     ret
   }
+    pub fn points(&self) -> &Vec<Point>{
+        &self.points
+    }
   
     pub fn find_cent_mut(&mut self) -> Point{
         if self.center.is_none(){

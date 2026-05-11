@@ -5,6 +5,7 @@ pub mod force;
 pub mod momentum;
 pub mod Energy;
 pub mod objects;
+pub mod control;
 
 type unit = f64;
 pub trait Vector{
