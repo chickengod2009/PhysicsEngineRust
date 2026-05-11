@@ -171,7 +171,7 @@ impl Object{
         let r = Vect::new((self.com.x()-temp.point().x()), (self.com.y()-temp.point().y()));
         let tor : Torque = Torque::new_with_force(temp.force().clone(), r, self.moment_inertia);
         self.all_forces.push(TempAction::new(temp, tor));
-        self.all_forces.sort();
+        
     }
     pub fn com(&self)-> Point{
         self.com.clone()
