@@ -1,2 +1,3 @@
 # PhysicsEngineRust
-My version of a simple physics engine with collision  —plans for implementation with java swing/javax
+My version of a simple physics engine with collision 
+Uses iced crate (Canvas+Tokio) to handle visuals
