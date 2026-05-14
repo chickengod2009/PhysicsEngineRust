@@ -134,9 +134,9 @@ impl Object{
         
         self.momentum.apply_impulse_x(&net, time_frame);
         self.momentum.apply_impulse_y(&net, time_frame);
-        self.momentum.calc_v();
+        self.momentum.v_solve_pyth();
         self.momentum.calc_angle();
-        self.kinetic.calc_new_v(self.momentum.v().unwrap());
+        self.kinetic.calc_new_v(self.momentum.v().unwrap();
         
     }
     pub fn manage(&mut self){
@@ -170,8 +170,8 @@ impl Object{
         let mut force = Force::new_force(self.central_mass);
         force.set(ForceIndex::F, force_mag);
         force.set(ForceIndex::Ang, a.normal.angle());
-        force.calc_x();
-        force.calc_y();
+        force.calc_x_cos();
+        force.calc_y_sin();
 
         
         let r  = Vect::new(a.point.x() - self.com.x(),  a.point.y() - self.com.y());
@@ -187,11 +187,11 @@ impl Object{
         ));
         other.all_forces.push(TempAction::new(
             TempForce::new(force.clone(), 2, false, a.point.clone()),
-            Torque::new_with_force(force.clone(), r2, mom_other),
+            Torque::new_with_force(force, r2, mom_other),
         ));
-        if other.id() == 60{
+        //if other.id() == 60{
         //println!("{} {}", force.x().unwrap(), force.get_angle().unwrap());
-        }
+        //}
     }
 }
 
@@ -226,7 +226,7 @@ impl Object{
         self.com.clone()
     }
     pub fn vel_as_vect(&self)->Vect{
-        let ret : Vect = Vect::new(self.momentum.vx().unwrap(), self.momentum.vy().unwrap());
+        let ret : Vect = Vect::new(self.momentum.vx().unwrap(), -self.momentum.vy().unwrap());
         ret
     }
     pub fn body(&self) ->&Polygon{
