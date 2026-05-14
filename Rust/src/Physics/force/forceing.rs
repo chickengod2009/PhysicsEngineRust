@@ -1,5 +1,5 @@
 use core::f64;
-use std::{fmt::Debug, ops::{Add, AddAssign}};
+use std::{fmt::{Debug, Display, write}, ops::{Add, AddAssign}};
 
 use super::super::vars::Var;
 
@@ -20,8 +20,19 @@ impl Force{
 
     }
 
+    pub fn set_some_all(mut self) -> Self{
+        let m = self.elements[ForceIndex::M.as_usize()];
+        for i in self.elements.iter_mut(){
+            *i = Some(0.0);
+        }
+        self.elements[ForceIndex::M.as_usize()] = m;
+        self
+    }
+
     pub fn inverse(mut self) -> Self{
-        self.set(ForceIndex::Ang, self[ForceIndex::Ang].unwrap() + 180 as unit);
+        self.set(ForceIndex::Ang, self[ForceIndex::Ang].unwrap() + f64::consts::PI);
+        self.calc_x();
+        self.calc_y();
         self
     }
 
@@ -42,13 +53,16 @@ impl AddAssign<&Force> for Force{
         );
         self[ForceIndex::Fx] = self[ForceIndex::Fx].zip(rhs[ForceIndex::Fx]).map(
             |(x,xx)| -> unit{
+                
                 x+xx
+
             }
         );
         self[ForceIndex::Fy] = self[ForceIndex::Fy].zip(rhs[ForceIndex::Fy]).map(
             |(x,xx)| -> unit{
                 x+xx
             }
+            
         );
         self.calc_mag().expect("48 forceing");
         self.calc_acc().expect("49 forceing");
@@ -76,15 +90,16 @@ impl Vector for Force {
     }
 
     fn calc_x(&mut self) -> Result<Self::Output, Self::Error> {
-        let res: Option<unit> = self[ForceIndex::F].clone().zip(self[ForceIndex::Fy].clone()).map(
+        let res: Option<unit> = self[ForceIndex::F].clone().zip(self[ForceIndex::Ang].clone()).map(
+            
             |(f,fy)| -> unit{
-                self.rev_pyth(f, fy)
+                self.mag_times_cos(f, fy)
             }
         ).or_else(
             || -> Option<unit>{
-                self[ForceIndex::F].clone().zip(self[ForceIndex::Ang].clone()).map(
+                self[ForceIndex::F].clone().zip(self[ForceIndex::Fy].clone()).map(
                     |(f, ang)| -> unit{
-                        self.mag_times_cos(f, ang)
+                        self.rev_pyth(f, ang)
                     }
                 )
             }
@@ -106,15 +121,15 @@ impl Vector for Force {
     }
 
     fn calc_y(&mut self) -> Result<Self::Output, Self::Error> {
-        let res: Option<unit> = self[ForceIndex::F].clone().zip(self[ForceIndex::Fx].clone()).map(
+        let res: Option<unit> = self[ForceIndex::F].clone().zip(self[ForceIndex::Ang].clone()).map(
             |(a,ay)| -> unit{
-                self.rev_pyth(a, ay)
+                self.mag_times_sin(a, ay)
             }
         ).or_else(
             || -> Option<unit>{
-                self[ForceIndex::F].clone().zip(self[ForceIndex::Ang].clone()).map(
+                self[ForceIndex::F].clone().zip(self[ForceIndex::Fx].clone()).map(
                     |(a, ang)| -> unit{
-                        self.mag_times_sin(a, ang)
+                        self.rev_pyth(a, ang)
                     }
                 )
             }
@@ -167,7 +182,7 @@ impl Vector for Force {
         );
 
         if let Some(a) = res{
-            self.set(ForceIndex::A, a);
+            self.set(ForceIndex::F, a);
             return Ok(a);
         }
 
@@ -177,7 +192,7 @@ impl Vector for Force {
     }
 
     fn get_angle(&mut self) -> Option<Self::Output> {
-        todo!()
+        self[ForceIndex::Ang]
     }
 
     fn calc_angle(&mut self) -> Result<Self::Output, Self::Error> {
@@ -436,5 +451,17 @@ impl From<Vect> for Force{
         ret[ForceIndex::Fy] = Some(value.y());
         ret
 
+    }
+}
+
+impl Display for Force{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "F: {}\nFx: {}\nFy: {}\nA: {}\nAx: {}\nAy: {}", self[ForceIndex::F].unwrap_or(0.0), self[ForceIndex::Fx].unwrap_or(0.0),self[ForceIndex::Fy].unwrap_or(0.0),self[ForceIndex::A].unwrap_or(0.0),self[ForceIndex::Ax].unwrap_or(0.0),self[ForceIndex::Ay].unwrap_or(0.0),)
+    }
+}
+
+impl Display for TempForce{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.force)
     }
 }

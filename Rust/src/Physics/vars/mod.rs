@@ -56,15 +56,15 @@ where T:Clone{
     pub(in super::super)fn solve_pyth(&self, x: unit, y:unit)-> unit{
         (x*x+y*y).sqrt()
      }
-    pub(in super::super)fn x_over_cos(&self, x:unit, b:unit)-> unit{
+    pub(in super::super)fn x_over_cos(&self, x:unit, ang:unit)-> unit{
         //let x = self[LineVar::Vy].unwrap();
-        let ang = b*(3.14 as unit)/180 as unit;
+        //let ang = b*(3.14 as unit)/180 as unit;
 		(x)/(ang.cos())
     }
     pub(in super::super)fn y_over_sin(&self, y:unit, angle:unit)-> unit{
         //let x = self[LineVar::Vy].unwrap();
-        let ang = angle*(3.14 as unit)/180 as unit;
-		(y)/(ang.sin())
+        //let ang = angle*(3.14 as unit)/180 as unit;
+		(y)/(angle.sin())
     }
     pub(in super::super)fn x_over_y(&self, a:unit, b:unit) -> unit{
         a/b
@@ -76,20 +76,20 @@ where T:Clone{
         if mag<other { panic!();}
         (mag*mag-other*other).sqrt()
     }
-    pub(in super::super)fn mag_times_cos(&self, x:unit, b:unit)-> unit{
+    pub(in super::super)fn mag_times_cos(&self, x:unit, ang:unit)-> unit{
         //let x = self[LineVar::Vy].unwrap();
-        let ang = b*(3.14 as unit)/180 as unit;
+        //let ang = b*(3.14 as unit)/180 as unit;
 		(x)*(ang.cos())
     }
-    pub(in super::super)fn mag_times_sin(&self, y:unit, angle:unit)-> unit{
+    pub(in super::super)fn mag_times_sin(&self, y:unit, ang:unit)-> unit{
         //let x = self[LineVar::Vy].unwrap();
-        let ang = angle*(3.14 as unit)/180 as unit;
+       // let ang = angle*(3.14 as unit)/180 as unit;
 		(y)*(ang.sin())
     }  
 
 	pub (in super::super) fn set_all_zero(mut self) -> Self{
 		for i in self.elements.iter_mut(){
-			i = Some(0)
+			*i = Some(0.0)
 		}
 		self
 	}	

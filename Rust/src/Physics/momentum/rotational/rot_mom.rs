@@ -28,6 +28,10 @@ impl RotationalMomentum{
         self.w= vel;
         self
     }
+
+    pub fn w_mut(&mut self) -> &mut unit{
+        &mut self.w
+    }
     
 
     
@@ -44,7 +48,11 @@ impl RotationalMomentum{
     }
 
     pub fn impulse(&mut self, torque : &Torque, time : unit){
-        self.w = torque.torque()*time/self.i;
+        self.w -= torque.torque()*time/(self.i/12.0);
+    }
+
+    pub fn moment_of_inertia(&self) -> unit{
+        self.i
     }
 
     

@@ -1,4 +1,4 @@
-use std::ops::AddAssign;
+use std::{fmt::Display, ops::AddAssign};
 
 use crate::Physics::{Vector, force::forceing::Force, objects::polygons::{Point, Vect}, unit, vars::{Var, index_get}};
 #[derive(Clone)]
@@ -10,25 +10,9 @@ pub struct Torque{
     moment : unit
 }
 
-#[derive(Clone)]
-pub enum VarTor{
-    T,A,I
-}
-impl index_get for VarTor{
-    fn as_usize(&self)-> usize {
-        match self {
-            &VarTor::A => 0,
-            &VarTor::I => 1,
-            &VarTor::T => 2
-        }
-    }
-}
-pub type TorqueVariable = Var<VarTor, 3>;
-impl TorqueVariable{
-    pub fn new_torque() -> Self{
-        Self { index: VarTor::A, elements: [None; 3], where_i: 0, size: 3 }
-    }
-}
+
+
+
 
 impl Torque {
     pub fn new_with_force(force : Force, r: Vect, mom : unit) -> Self{
@@ -41,7 +25,7 @@ impl Torque {
         self.torque
     }
     pub fn torque_by_force(&mut self){
-        let tor = (self.r.x()*self.force.y().unwrap())-(self.force.x().unwrap()*self.r.x());
+        let tor = (self.r.x()*self.force.y().unwrap())-(self.force.x().unwrap()*self.r.y());
         self.torque=tor;
 
     }
@@ -52,11 +36,20 @@ impl Torque {
         self.alpha = self.torque/self.moment;
         
     }
+    pub fn i(&self)-> unit{
+        self.moment
+    }
 }
 
 impl AddAssign<&Torque> for Torque{
     fn add_assign(&mut self, rhs: &Torque) {
         self.torque+=rhs.torque;
         self.calc_alpha();
+    }
+}
+
+impl Display for Torque{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "T: {}\nAlpha: {}\nI: {}", self.torque, self.alpha, self.moment)
     }
 }

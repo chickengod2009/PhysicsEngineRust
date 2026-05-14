@@ -24,4 +24,4 @@ pub trait Vector{
 pub struct Time{
 	time: unit
 }
-pub static time_frame : unit = 0.001;
+pub static time_frame : f64 = 0.16;

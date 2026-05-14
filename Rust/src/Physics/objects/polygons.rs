@@ -1,19 +1,13 @@
 use core::f64;
 use std::{fmt::{Display, write}, ops::{Add, AddAssign}};
+use iced::{
+    Color, Element, Length, Rectangle, Renderer, Settings, Theme, widget::{Canvas, canvas::{self, Path}}
+};
+use iced::Point as IcedPoint;
 
 use crate::Physics::unit;
 //type unit = f64;
-fn main(){
-  
-  let g: Vec<Point>= vec![Point::new(0_f64,0_f64),Point::new(4_f64,0_f64),Point::new(4_f64,4_f64), Point::new(0_f64,4_f64)];
-  let h = Polygon::new(g);
-  
-  for i in h.angles.iter(){
-    println!("{}",i.angle);
-  }
-  
-  
-}
+
 #[derive(PartialEq)]
 pub struct Point{
     x: unit, y:unit
@@ -34,15 +28,16 @@ pub struct Angle{
     a:Line,b:Line,
     shared_point: Point,
     angle: unit,
-    angle_to_horz: unit
+    angle_to_horz: unit,
 }
 #[derive(PartialEq, Clone)]
 pub struct Polygon{
     points: Vec<Point>,
     lines: Vec<Line>,
     angles: Vec<Angle>,
-    center: Option<Point>,
-    area: Option<unit>
+    center: Point,
+    area: Option<unit>,
+    r: unit
 }
 
 impl Point{
@@ -61,6 +56,14 @@ impl Line {
         let mut h =Self { a:a, b:b, slope:0 as unit, k: 0 as unit, is_vert:false, angle_to_horz: 0 as unit};
         h.calc_slope();
         h
+    }
+
+    pub fn length(&self) -> unit{
+        let ax = self.a.x;
+        let ay = self.a.y;
+        let bx = self.b.x;
+        let by = self.b.y;
+        ((ax.max(bx) - ax.min(bx))*(ax.max(bx) - ax.min(bx)) + (ay.max(by) - ay.min(by))*(ay.max(by) - ay.min(by))).sqrt()
     }
 
 
@@ -239,18 +242,29 @@ impl Polygon{
       ang.push(Angle::new(lines[i].clone(), lines[i+1].clone()).unwrap());
     }
     ang.push(Angle::new(lines[qs-1].clone(), lines[0].clone()).unwrap());
-    let ret =Self{points: q, lines: lines, angles: ang, center: None, area: None};
+    let mut ret =Self{points: q, lines: lines, angles: ang, center: Point { x: 0.0, y: 0.0 }, area: None, r:0.0};
+    ret.find_r();
     //ret.area();
     
     ret
+  }
+
+  pub fn find_r(&mut self){
+    let mut rr :unit =0.0;
+    for i in self.lines.iter(){
+        rr.max(i.length());
+    }
+    self.r = rr;
+  }
+  pub fn r(&self) -> unit{
+    self.r
   }
     pub fn points(&self) -> &Vec<Point>{
         &self.points
     }
   
-    pub fn find_cent_mut(&mut self) -> Point{
-        if self.center.is_none(){
-  	        let mut x : unit =0 as unit;
+    pub fn find_cent(&mut self) -> &Point{
+          	        let mut x : unit =0 as unit;
             let mut y: unit =0 as unit;
             let s: unit=self.points.len() as unit;
             for i in self.points.iter(){
@@ -258,25 +272,16 @@ impl Polygon{
                 y+=i.y
             }
             let ret: Point = Point::new(x/s, y/s);
-            self.center = Some(ret);
-        }
-        self.center.clone().unwrap()
-    }
-    pub fn find_cent(&self) -> Point{
-        if self.center.is_none(){
-  	        let mut x : unit =0 as unit;
-            let mut y: unit =0 as unit;
-            let s: unit=self.points.len() as unit;
-            for i in self.points.iter(){
-                x+=i.x;
-                y+=i.y
-            }
-            let ret: Point = Point::new(x/s, y/s);
-            ret
-        }else {
-            self.center.clone().unwrap()
-        }
+            self.center = (ret);
         
+        &self.center
+    }
+    pub fn cent(&self) -> &Point{
+        &self.center
+        
+    }
+    pub fn cent_mut(&mut self) -> &mut Point{
+        &mut self.center
     }
   
   
@@ -343,20 +348,25 @@ impl Polygon{
 
     // ensure normal points self -> other
     let center_dir = Vect::new(
-        ot.find_cent_mut().x - self.find_cent().x,
-        ot.find_cent().y - self.find_cent().y,
+        ot.find_cent().x - self.cent().x,
+        ot.cent().y - self.cent().y,
     );
 
-    if center_dir.dot(&smallest_axis) < 0 as unit {
+    if center_dir.dot(&smallest_axis) > 0 as unit {
 
         smallest_axis = smallest_axis * (-1 as unit);
     }
 
     // approximate contact point
-    let point = Point::new(
-        (self.find_cent().x + ot.find_cent().x) / 2 as unit,
-        (self.find_cent().y + ot.find_cent().y) / 2 as unit,
-    );
+    let contact = ot.points.iter()
+    .min_by(|a, b| {
+        let da = a.x * smallest_axis.x() + a.y * smallest_axis.y();
+        let db = b.x * smallest_axis.x() + b.y * smallest_axis.y();
+        da.partial_cmp(&db).unwrap()
+    })
+    .unwrap();
+
+    let point = Point::new(contact.x, contact.y);
 
     Some(Collision {
         point,
@@ -389,7 +399,7 @@ impl Polygon{
 
 
     pub fn translation(&mut self, trans: Translation2d){
-      	self.find_cent().add_assign(&trans);
+      	self.cent_mut().add_assign(&trans);
         for i in self.points.iter_mut(){
         
             i.add_assign(&trans);
@@ -405,18 +415,18 @@ impl Polygon{
         
     }
     pub fn rotation(&mut self, trand: Rotational2d ){
-      	let cent : &Point = &self.find_cent();
+      	
         let trans : RotSinCos = RotSinCos::new(trand);
         
-				for i in self.points.iter_mut(){
+		for i in self.points.iter_mut(){
         
-            i.add_assign((&trans,cent));
+            i.add_assign((&trans,&self.center));
         }
         for i in self.lines.iter_mut(){
-            i.add_assign((&trans,cent));
+            i.add_assign((&trans,&self.center));
         }
         for i in self.angles.iter_mut(){
-            i.add_assign((&trans,cent));
+            i.add_assign((&trans,&self.center));
             
             
         }
@@ -530,8 +540,8 @@ impl AddAssign<(&RotSinCos, &Point)> for Point {
 			let tempy : unit = self.y-rhs.1.y;
       
       let (sin, cos) = (rhs.0.sin, rhs.0.cos);
-      let newx :unit = tempx*cos-tempy*sin;
-      let newy :unit = tempx*sin+tempy*cos;
+      let newx :unit = (tempx*cos-tempy*sin);
+      let newy :unit = (tempx*sin+tempy*cos);
       self.x =  rhs.1.x+newx;
       self.y = rhs.1.y+newy;
         
@@ -748,27 +758,32 @@ impl Div<unit> for Vect {
         }
     }
 }
-impl From<self::&Point> for iced::Point{
 
-	fn from(p : &Point)-> iced::Point{
-    iced::Point::new(p.x(), p.y())
-  }  
-
-}
 
 impl Polygon{
 
-	fn draw(&self, frame: & mut canvas::Frame){
-		let path : Path = Path::build(|builder| {
+	pub fn draw(&self, frame: & mut canvas::Frame, color : Color){
+		let path : Path = Path::new(|builder| {
       if let Some(first) = self.points.first() {
-          builder.move_to(*iced::Point::from(&first));
+          builder.move_to(IcedPoint::new(first.x() as f32 , first.y() as f32));
           for p in &self.points[1..] {
-             builder.line_to(*iced::Point::from(*p));
+             builder.line_to(IcedPoint::new(p.x as f32, p.y as f32));
           }
           builder.close();
       }
     });
-    frame.fill(&path, self.color); 
+    frame.fill(&path, color); 
   }  
 
+}
+
+impl Default for Polygon{
+    fn default() -> Self {
+        Polygon::new(vec![
+            Point::new(100.0, 100.0),
+            Point::new(200.0, 100.0),
+            Point::new(200.0, 200.0),
+            Point::new(100.0, 200.0),
+        ])
+    }
 }

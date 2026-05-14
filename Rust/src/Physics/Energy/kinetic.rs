@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::Physics::unit;
 #[derive(Clone)]
 pub struct KE{
@@ -57,4 +59,10 @@ impl KE{
     
         
 
+}
+
+impl Display for KE{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "KE: {}\nV: {}", self.value, self.velocity)
+    }
 }

@@ -1,4 +1,4 @@
-use crate::Physics::{Vector, force::forceing::Force, momentum::linear::var::LinVar, unit, vars::Var};
+use crate::Physics::{Vector, force::forceing::Force, momentum::linear::var::LinVar, unit, vars::{Var, index_get}};
 
 
 
@@ -159,7 +159,9 @@ impl LinearMomentum{
         let change_v = impulse/self.mass().unwrap();
         let mut v = self.vx().unwrap();
         v -= change_v;
+        
         self.set(LinVar::Vx, v);
+        //println!("{} {} {} {} {}, {}", change_v,v,self[LinVar::Vx].unwrap(), impulse , time, imp.x().unwrap());
     }   
     pub fn apply_impulse_y(&mut self, imp : &Force, time : unit){
         let impulse = imp.y().unwrap()*time;

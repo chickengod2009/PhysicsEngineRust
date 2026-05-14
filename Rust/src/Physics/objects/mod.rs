@@ -1,4 +1,6 @@
-use std::hash::{self, Hash, Hasher};
+use std::{fmt::Display, hash::{self, Hash, Hasher}};
+
+use iced::{Color, Renderer, widget::canvas::Frame};
 
 use crate::Physics::{Energy::{kinetic::KE, mechanical::ME}, Vector, force::{forceing::{Force, TempForce}, torque::{self, Torque}, variable::ForceIndex }, momentum::{linear::{linear_mom::LinearMomentum, var::LinVar}, rotational::{rot_mom::RotationalMomentum, var::RotVar}}, objects::polygons::{Point, Polygon, Vect}, time_frame, unit};
 use self::polygons::{Translation2d, RotSinCos, Rotational2d};
@@ -17,7 +19,8 @@ pub struct Object{
     non_moving:bool,
     collidable:bool,
     body: Polygon,
-    id: i32
+    id: i32,
+    stickyness : unit
     
     
 
@@ -29,8 +32,8 @@ pub struct Object{
 impl Object{
 
 
-	pub fn new(body: &Polygon, mas: unit, rig: bool, col: bool, id :i32) -> Self{
-        
+	pub fn new(body: &Polygon, mas: unit, rig: bool, col: bool, id :i32, stick : unit) -> Self{
+        assert!(mas !=0.0);
                 
     	let pass = Self{
             
@@ -38,15 +41,16 @@ impl Object{
             
             kinetic: KE::new(mas),
             all_forces : Vec::new(),
-            momentum : LinearMomentum::create().set_all_to_zero().with_mass(mas),
-            momentum_rot : RotationalMomentum::create(mas),
+            momentum : LinearMomentum::create().set_all_zero().with_mass(mas),
+            momentum_rot : RotationalMomentum::create(mas*5.0),
     		net_force : Force::new_force(mas),
-    		com: body.find_cent(),
+    		com: body.cent().clone(),
     		central_mass: mas,
     		non_moving: rig,
     		collidable: col,
     		body: body.clone(),
-            id: id 
+            id: id ,
+            stickyness : stick
             
             
         };
@@ -54,6 +58,13 @@ impl Object{
         pass
   
 	}
+
+    pub fn with_starting_v(mut self, v: Vect) -> Self{
+        self.momentum = self.momentum.with_vx(v.x()).with_vy(-v.y());
+        self
+    }
+
+    pub fn mass(&self) -> unit{self.central_mass}
 
     pub fn id(&self)-> i32{
         self.id
@@ -71,7 +82,7 @@ impl Object{
         };   
         let trans : Translation2d = Translation2d::new(vx*time_frame, vy*time_frame);
         self.body.translation(trans);
-        self.com = self.body.find_cent_mut();
+        self.com = self.body.find_cent().clone();
         
         
     }
@@ -80,8 +91,11 @@ impl Object{
             return;
         }
 
+        
+
+
           
-        let trans : Rotational2d = Rotational2d::new(self.momentum_rot.w()*time_frame);
+        let trans : Rotational2d = Rotational2d::new(-self.momentum_rot.w()*time_frame);
         self.body.rotation(trans);
         
     }    
@@ -91,22 +105,33 @@ impl Object{
 
 impl Object{
     pub fn apply_torques(&mut self){
-        let mut net : Torque = Torque::new_with_force(Force::new_force(0.0), Vect::new(0.0, 0.0), self.moment_inertia);
+        let mut net : Torque = Torque::new_with_force(Force::new_force(0.0).set_all_zero(), Vect::new(0.0, 0.0), self.momentum_rot.moment_of_inertia());
         for i in self.all_forces.iter(){
-            if net.torque() <= 1e-4{
+            if i.torque().torque().abs() <= 1e-4{
                 continue;
             }
             net+= &i.torque;
         }
+        
 
         self.momentum_rot.impulse(&net, time_frame);
+        if self.momentum_rot.w() >= 40.0{
+            *self.momentum_rot.w_mut() = 40.0;
+        }
+        if self.momentum_rot.w() <= -40.0{
+            *self.momentum_rot.w_mut() = -40.0;
+        }
         
     }
     pub fn apply_forces(&mut self){
-        let mut net : Force = Force::new_force(self.central_mass);
+        let mut net : Force = Force::new_force(self.central_mass).set_all_zero();
         for i in self.all_forces.iter(){
             net+= i.temp.force();
+            
         }
+        //net.calc_mag();
+        
+        
         self.momentum.apply_impulse_x(&net, time_frame);
         self.momentum.apply_impulse_y(&net, time_frame);
         self.momentum.calc_v();
@@ -132,29 +157,43 @@ impl Object{
         
         
     }
-    pub fn collide(&mut self, other : &mut Object){
-		
-        let damp_cof = 0.80 as unit;
-        let k: f64 = 0.005 as unit;
-		if !self.collidable || !other.collidable{
-			return;
-		}	
+    pub fn collide(&mut self, other: &mut Object) {
+    let damp_cof = (self.stickyness + other.stickyness)/2.0;
+    let k: f64 = 5 as unit;
+    if !self.collidable || !other.collidable { return; }
+
+    if let Some(a) = self.body.collision(&mut other.body) {
+        let vec = Vect::new(self.momentum.vx().unwrap(), self.momentum.vy().unwrap());
+        let vn = vec.dot(&a.normal);
+        let force_mag = (k * a.depth - damp_cof * vn).max(0.0);
+
+        let mut force = Force::new_force(self.central_mass);
+        force.set(ForceIndex::F, force_mag);
+        force.set(ForceIndex::Ang, a.normal.angle());
+        force.calc_x();
+        force.calc_y();
+
         
-        if let Some(a) = self.body.collision(&mut other.body){
-            let vec : Vect  = Vect::new(self.momentum.vx().unwrap(), self.momentum.vy().unwrap());
-            let vn : unit = vec.dot(&a.normal);
-            let force_mag = (k * a.depth* 0.2 - damp_cof*vn).max(0.0);
-            let mut force : Force = Force::new_force(self.central_mass);
-            
-            force.set(ForceIndex::F, force_mag);
-            force.set(ForceIndex::Ang, a.normal.angle());
-            force.calc_x();
-            force.calc_y();
-            let r = Vect::new((self.com.x() -a.point.x()), (self.com.y()-a.point.y()));
-            self.all_forces.push(TempAction::new(TempForce::new(force.clone(), 1, false, a.point.clone()), Torque::new_with_force(force.clone(), r, self.moment_inertia)));
-                            
+        let r  = Vect::new(a.point.x() - self.com.x(),  a.point.y() - self.com.y());
+        let r2 = Vect::new(a.point.x() - other.com.x(), a.point.y() - other.com.y());
+
+        
+        let mom_self  = self.momentum_rot.moment_of_inertia();
+        let mom_other = other.momentum_rot.moment_of_inertia();
+
+        self.all_forces.push(TempAction::new(
+            TempForce::new(force.clone().inverse(), 2, false, a.point.clone()),
+            Torque::new_with_force(force.clone().inverse(), r, mom_self),
+        ));
+        other.all_forces.push(TempAction::new(
+            TempForce::new(force.clone(), 2, false, a.point.clone()),
+            Torque::new_with_force(force.clone(), r2, mom_other),
+        ));
+        if other.id() == 60{
+        //println!("{} {}", force.x().unwrap(), force.get_angle().unwrap());
         }
     }
+}
 
     pub fn tick(&mut self){
         
@@ -167,10 +206,20 @@ impl Object{
         
     }
 
+    pub fn add_torque(&mut self, torque:  Torque, frames: i32){
+        self.all_forces.push(TempAction::new(TempForce::new(Force::from(Vect::new(0.0, 0.0)), frames, false, self.com()), torque));
+    }
+
     pub fn add_temp_force(&mut self, temp : TempForce){
         let r = Vect::new((self.com.x()-temp.point().x()), (self.com.y()-temp.point().y()));
-        let tor : Torque = Torque::new_with_force(temp.force().clone(), r, self.moment_inertia);
+        let tor : Torque = Torque::new_with_force(temp.force().clone(), r, self.momentum_rot.moment_of_inertia());
         self.all_forces.push(TempAction::new(temp, tor));
+        
+    }
+    pub fn add_temp_force_no_torque(&mut self, temp : TempForce){
+        let r = Vect::new((self.com.x()-temp.point().x()), (self.com.y()-temp.point().y()));
+        //let tor : Torque = Torque::new_with_force(temp.force().clone(), r, self.momentum_rot.moment_of_inertia());
+        self.all_forces.push(TempAction::new(temp, Torque::new_with_force(Force::new_force(0.0).set_all_zero(), Vect::new(0.0, 0.0),9.0)));
         
     }
     pub fn com(&self)-> Point{
@@ -183,22 +232,50 @@ impl Object{
     pub fn body(&self) ->&Polygon{
         &self.body
     }
+    pub fn draw(&self, frame :  &mut Frame<Renderer>  ){
+        self.body.draw(frame, Color::from_rgb8(20, 100, 100));
+    }
+    pub fn reverse_v(& mut self){
+        self.momentum.set(LinVar::Vx, -self.momentum.vx().unwrap());
+        self.momentum.set(LinVar::Vy, -self.momentum.vy().unwrap());
+        //self.momentum.set(LinVar::Ang, self.momentum.get_angle().unwrap());
+    }
+
+    pub fn sendLog(&self) -> ObjectLog{
+        ObjectLog::new(self)
+    }
+
+
     
 }
 
+
 //Logging info
-struct ObjectLog{
+pub struct ObjectLog{
     ke :KE,
-    v : unit,
-    w: unit,
-    forces : Vec<TempForce>,
-    torques : Vec<Torque>,
+    mom : LinearMomentum,
+    wmom: RotationalMomentum,
+    forces: Vec<TempAction>,
     com: Point
 }
+
+impl ObjectLog{
+    pub fn new(obj : &Object)-> Self{
+
+        Self { ke: obj.kinetic.clone(), mom: obj.momentum.clone(), wmom: obj.momentum_rot.clone(), forces: obj.all_forces.clone(), com: obj.com.clone() }
+
+    }
+}
+
 #[derive(Clone)]
 pub struct TempAction{
     temp : TempForce,
     torque : Torque
+}
+impl Display for TempAction{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Force:\n{}\nTorque:\n{}", self.temp, self.torque)
+    }
 }
 
 impl TempAction {
