@@ -6,5 +6,4 @@ edition = "2024"
 
 
 [dependencies]
-iced = { version = "0.14.0", features = ["canvas"] }
-jni = "0.21"
+iced = { version = "0.13", features = ["canvas", "tokio"] }
