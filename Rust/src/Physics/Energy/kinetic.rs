@@ -63,6 +63,6 @@ impl KE{
 
 impl Display for KE{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "KE: {}\nV: {}", self.value, self.velocity)
+        write!(f, "KE: {}\nV: {} (px/s)", self.value, self.velocity)
     }
 }
