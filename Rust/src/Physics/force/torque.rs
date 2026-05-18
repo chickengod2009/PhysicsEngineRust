@@ -25,7 +25,7 @@ impl Torque {
         self.torque
     }
     pub fn torque_by_force(&mut self){
-        let tor = (self.r.x()*self.force.y().unwrap())-(self.force.x().unwrap()*self.r.y());
+        let tor = (self.r.x()*self.force.y().unwrap())*0.001-(self.force.x().unwrap()*self.r.y())*0.001;
         self.torque=tor;
 
     }

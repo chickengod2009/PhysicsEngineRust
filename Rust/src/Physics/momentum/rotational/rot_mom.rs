@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::Physics::{Vector, force::torque::Torque, momentum::rotational::var::RotVar, unit, vars::Var};
 
 
@@ -48,7 +50,10 @@ impl RotationalMomentum{
     }
 
     pub fn impulse(&mut self, torque : &Torque, time : unit){
-        self.w -= torque.torque()*time/(self.i/12.0);
+        
+        let impulse = torque.torque()*time;
+        let change_v = impulse/self.i;
+        self.w-=change_v;
     }
 
     pub fn moment_of_inertia(&self) -> unit{
@@ -98,3 +103,9 @@ impl Vector for RotationalMomentum {
         todo!()
     }
 }*/
+
+impl Display for RotationalMomentum{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "L: {}\nhI: {}\nW: {}", self.l, self.i, self.w)
+    }
+}

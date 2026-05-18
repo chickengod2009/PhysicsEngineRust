@@ -1,4 +1,6 @@
-use crate::Physics::{Vector, force::forceing::Force, momentum::linear::var::LinVar, unit, vars::{Var, index_get}};
+use std::fmt::Display;
+
+use crate::Physics::{Vector, force::{forceing::Force}, momentum::linear::var::LinVar, unit, vars::{Var, index_get}};
 
 
 
@@ -39,6 +41,17 @@ impl LinearMomentum{
     pub fn with_py(mut self, momentay: unit) -> Self{
         self.set(LinVar::Py, momentay).expect("Linear momenta with_py");
         self
+    }
+
+    pub fn calc_p_over_v(&mut self){
+        self[LinVar::P] = Some(self[LinVar::V].unwrap_or(0.0)*self[LinVar::M].unwrap_or(0.0));
+    }
+    pub fn calc_px_over_vx(&mut self){
+        self[LinVar::Px] = Some(self[LinVar::Vx].unwrap_or(0.0)*self[LinVar::M].unwrap_or(0.0));
+    }
+    pub fn calc_py_over_vy(&mut self){
+        self[LinVar::Py] = Some(self[LinVar::Vy].unwrap_or(0.0)*self[LinVar::M].unwrap_or(0.0));
+        //println!("{}, {}", self[LinVar::V].unwrap(), self[LinVar::M].unwrap());
     }
 
     
@@ -152,6 +165,12 @@ impl LinearMomentum{
         Err(LinErr{})        
             
         
+    }
+
+    pub fn v_calc_pyth(&mut self){
+        let new = self[LinVar::Vx].unwrap_or(0.0).powi(2) + self[LinVar::Vy].unwrap_or(0.0).powi(2);
+        let new = new.sqrt();
+        self[LinVar::V] =Some(new);
     }
 
     pub fn apply_impulse_x(&mut self, imp : &Force, time : unit){
@@ -370,5 +389,12 @@ impl Vector for LinearMomentum{
 
         Err(LinErr)
     
+    }
+}
+
+
+impl Display for LinearMomentum{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "P: {}\nPx: {}\nPy: {}\nV: {}\nVx: {}\nVy: {}", self[LinVar::P].unwrap_or(0.0), self[LinVar::Px].unwrap_or(0.0), self[LinVar::Py].unwrap_or(0.0), self[LinVar::V].unwrap_or(0.0), self[LinVar::Vx].unwrap_or(0.0), -self[LinVar::Vy].unwrap_or(0.0),)
     }
 }

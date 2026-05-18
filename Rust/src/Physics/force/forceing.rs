@@ -36,6 +36,10 @@ impl Force{
         self
     }
 
+    pub fn ay_from_fy(&mut self){
+        self[ForceIndex::Ay] = Some(self.x_over_y(self[ForceIndex::Fy].unwrap_or(0.0), self[ForceIndex::M].unwrap_or(0.0)));
+    }
+
     
 }
 
@@ -242,6 +246,8 @@ impl Vector for Force {
 
         Err(ForceErr)
     }
+
+
 }
 
 pub struct ForceErr;
@@ -353,6 +359,19 @@ impl Force{
         Err(ForceErr)
     }
 
+    pub fn x_calc_cos(&mut self){
+        self[ForceIndex::Fx] = Some(self[ForceIndex::F].unwrap_or(0.0)*(self[ForceIndex::Ang].unwrap_or(0.0)).cos());
+    }
+    pub fn y_calc_sin(&mut self){
+        self[ForceIndex::Fy] = Some(self[ForceIndex::F].unwrap_or(0.0)*(self[ForceIndex::Ang].unwrap_or(0.0)).sin());
+    }
+    pub fn ax_calc_fx(&mut self){
+        self[ForceIndex::Ax] = Some(self[ForceIndex::Fx].unwrap_or(0.0)/(self[ForceIndex::M].unwrap_or(0.0)));
+    }
+    pub fn a_calc_f(&mut self){
+        self[ForceIndex::A] = Some(self[ForceIndex::F].unwrap_or(0.0)/(self[ForceIndex::M].unwrap_or(0.0)));
+    }
+
 }
 
 #[derive(Clone)]
@@ -403,6 +422,9 @@ impl TempForce{
     }
     pub fn force(&self) -> &Force{
         &self.force
+    }
+    pub fn force_mut(&mut self) -> &mut Force{
+        &mut self.force
     }
 }
 impl Ord for TempForce{

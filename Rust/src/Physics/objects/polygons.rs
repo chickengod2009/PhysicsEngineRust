@@ -415,8 +415,10 @@ impl Polygon{
         
     }
     pub fn rotation(&mut self, trand: Rotational2d ){
+
+        let trnn = Rotational2d::new(trand.angle*30.0);
       	
-        let trans : RotSinCos = RotSinCos::new(trand);
+        let trans : RotSinCos = RotSinCos::new(trnn);
         
 		for i in self.points.iter_mut(){
         
@@ -516,8 +518,8 @@ impl Add<&Translation2d> for Point{
 }
 impl AddAssign<&Translation2d> for Point {
     fn add_assign(&mut self, rhs: &Translation2d) {
-        self.x+= rhs.x;
-        self.y+=rhs.y;
+        self.x+= rhs.x*10.0;
+        self.y+=rhs.y*10.0;
     }
 }
 impl AddAssign<&Translation2d> for Line {
@@ -785,5 +787,11 @@ impl Default for Polygon{
             Point::new(200.0, 200.0),
             Point::new(100.0, 200.0),
         ])
+    }
+}
+
+impl Display for Point{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "X: {}\nY: {}", self.x, self.y)
     }
 }

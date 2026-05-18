@@ -1,4 +1,4 @@
-use std::{fmt::Display, hash::{self, Hash, Hasher}};
+use std::{fmt::{Display, write}, hash::{self, Hash, Hasher}};
 
 use iced::{Color, Renderer, widget::canvas::Frame};
 
@@ -20,8 +20,12 @@ pub struct Object{
     collidable:bool,
     body: Polygon,
     id: i32,
-    stickyness : unit
-    
+    stickyness : unit,
+    name : String,
+    color :  Color,
+    logged: bool,
+    suggest_log_from_collision: i8,
+    am_i_attractive: bool
     
 
 
@@ -32,7 +36,7 @@ pub struct Object{
 impl Object{
 
 
-	pub fn new(body: &Polygon, mas: unit, rig: bool, col: bool, id :i32, stick : unit) -> Self{
+	pub fn new(body: &mut Polygon, mas: unit, rig: bool, col: bool, id :i32, stick : unit, logged: bool, color : Color, name : String) -> Self{
         assert!(mas !=0.0);
                 
     	let pass = Self{
@@ -42,15 +46,21 @@ impl Object{
             kinetic: KE::new(mas),
             all_forces : Vec::new(),
             momentum : LinearMomentum::create().set_all_zero().with_mass(mas),
-            momentum_rot : RotationalMomentum::create(mas*5.0),
+            momentum_rot : RotationalMomentum::create(mas*2.0),
     		net_force : Force::new_force(mas),
-    		com: body.cent().clone(),
+    		com: body.find_cent().clone(),
     		central_mass: mas,
     		non_moving: rig,
     		collidable: col,
     		body: body.clone(),
             id: id ,
-            stickyness : stick
+            stickyness : stick,
+            logged: logged,
+            color : color,
+            name :name,
+            suggest_log_from_collision : 0i8,
+            am_i_attractive: false
+
             
             
         };
@@ -59,6 +69,10 @@ impl Object{
   
 	}
 
+    pub fn yes_i_am_attactive(mut self) -> Self{
+        self.am_i_attractive = true;
+        self
+    }
     pub fn with_starting_v(mut self, v: Vect) -> Self{
         self.momentum = self.momentum.with_vx(v.x()).with_vy(-v.y());
         self
@@ -105,38 +119,33 @@ impl Object{
 
 impl Object{
     pub fn apply_torques(&mut self){
+        if self.non_moving{return;}
         let mut net : Torque = Torque::new_with_force(Force::new_force(0.0).set_all_zero(), Vect::new(0.0, 0.0), self.momentum_rot.moment_of_inertia());
         for i in self.all_forces.iter(){
-            if i.torque().torque().abs() <= 1e-4{
-                continue;
-            }
+            
             net+= &i.torque;
         }
         
 
         self.momentum_rot.impulse(&net, time_frame);
-        if self.momentum_rot.w() >= 40.0{
-            *self.momentum_rot.w_mut() = 40.0;
-        }
-        if self.momentum_rot.w() <= -40.0{
-            *self.momentum_rot.w_mut() = -40.0;
-        }
+        
         
     }
     pub fn apply_forces(&mut self){
+        if self.non_moving{self.kinetic.calc_new_v(0.0);return;}
         let mut net : Force = Force::new_force(self.central_mass).set_all_zero();
         for i in self.all_forces.iter(){
             net+= i.temp.force();
-            
+        
         }
         //net.calc_mag();
         
         
         self.momentum.apply_impulse_x(&net, time_frame);
         self.momentum.apply_impulse_y(&net, time_frame);
-        self.momentum.v_solve_pyth();
+        self.momentum.v_calc_pyth();
         self.momentum.calc_angle();
-        self.kinetic.calc_new_v(self.momentum.v().unwrap();
+        self.kinetic.calc_new_v(self.momentum.v().unwrap());
         
     }
     pub fn manage(&mut self){
@@ -147,19 +156,62 @@ impl Object{
             if let Some(a) = i.temp.tick(){
                 if a <=0{
                     amount.push(s);
-                }
+                } 
+                
             }
+            i.temp.force_mut().ay_from_fy();
+            i.temp.force_mut().a_calc_f();
+            i.temp.force_mut().ax_calc_fx();
+
+            
             s+=1;
         }
         for i in amount.into_iter().rev(){
             self.all_forces.remove(i);
         }
-        
+        //1000000000000000000
         
     }
+    pub fn attractive_forces(&mut self, other: &mut Self){
+        if !self.am_i_attractive || !other.am_i_attractive{
+            return;
+        }
+        let r = Vect::new(other.com().x()-self.com.x(), other.com.y()-self.com.y());
+        if r.mag()<=1.0{
+            return;
+        }
+        let mag : unit = (6.67e-13*self.central_mass)*(other.central_mass/r.mag().powi(2));
+        let normal = r.normalized();
+        let x = mag*normal.x();
+        let y = mag*normal.y();
+        let mut f_self = Force::new_force(self.central_mass);
+        f_self.set(ForceIndex::Fx, -x);
+        f_self.set(ForceIndex::Fy, -y);
+        f_self.calc_mag();
+        f_self.calc_angle();
+
+
+        let mut f_other = Force::new_force(other.central_mass);
+        f_other.set(ForceIndex::Fx,x);
+        f_other.set(ForceIndex::Fy, y);
+        f_other.calc_mag();
+        f_other.calc_angle();
+
+        
+
+        let self_temp  = TempForce::new(f_self,  2, false, self.com());
+        let other_temp = TempForce::new(f_other, 2, false, other.com());
+        //println!("{}", self_temp.force());
+        self.add_temp_force_no_torque(self_temp);
+        other.add_temp_force_no_torque(other_temp);
+        
+       
+
+    }
     pub fn collide(&mut self, other: &mut Object) {
-    let damp_cof = (self.stickyness + other.stickyness)/2.0;
-    let k: f64 = 5 as unit;
+        let red_mass = (self.central_mass * other.central_mass) / (self.central_mass + other.central_mass);
+    let damp_cof = (self.stickyness + other.stickyness) * red_mass;
+    let k: f64 = 10.0 *red_mass as unit;
     if !self.collidable || !other.collidable { return; }
 
     if let Some(a) = self.body.collision(&mut other.body) {
@@ -170,25 +222,30 @@ impl Object{
         let mut force = Force::new_force(self.central_mass);
         force.set(ForceIndex::F, force_mag);
         force.set(ForceIndex::Ang, a.normal.angle());
-        force.calc_x_cos();
-        force.calc_y_sin();
+        force.x_calc_cos();
+        force.y_calc_sin();
+        
+        
 
         
         let r  = Vect::new(a.point.x() - self.com.x(),  a.point.y() - self.com.y());
         let r2 = Vect::new(a.point.x() - other.com.x(), a.point.y() - other.com.y());
 
         
-        let mom_self  = self.momentum_rot.moment_of_inertia();
-        let mom_other = other.momentum_rot.moment_of_inertia();
+        //let mom_self  = self.momentum_rot.moment_of_inertia();
+        //let mom_other = other.momentum_rot.moment_of_inertia();
+        //println!("{}", mom_self);
 
         self.all_forces.push(TempAction::new(
             TempForce::new(force.clone().inverse(), 2, false, a.point.clone()),
-            Torque::new_with_force(force.clone().inverse(), r, mom_self),
+            Torque::new_with_force(force.clone().inverse(), r, 1.0),
         ));
         other.all_forces.push(TempAction::new(
-            TempForce::new(force.clone(), 2, false, a.point.clone()),
-            Torque::new_with_force(force, r2, mom_other),
+            TempForce::new(force.clone(), 1, false, a.point.clone()),
+            Torque::new_with_force(force, r2, 1.0),
         ));
+        self.suggest_log_from_collision+=1;
+        other.suggest_log_from_collision+=1;
         //if other.id() == 60{
         //println!("{} {}", force.x().unwrap(), force.get_angle().unwrap());
         //}
@@ -206,6 +263,22 @@ impl Object{
         
     }
 
+    pub fn should_I_suggest_log_col(&mut self) -> Option<ObjectLog>{
+        if self.suggest_log_from_collision >= 5 && self.logged{
+            self.suggest_log_from_collision =0;
+            //println!("{}", self.name);
+            
+            Some(ObjectLog::new(&self))
+        } else{ 
+            if !self.logged{
+                self.suggest_log_from_collision= 0;
+            }
+            None
+            
+        }
+        
+    }
+
     pub fn add_torque(&mut self, torque:  Torque, frames: i32){
         self.all_forces.push(TempAction::new(TempForce::new(Force::from(Vect::new(0.0, 0.0)), frames, false, self.com()), torque));
     }
@@ -219,7 +292,7 @@ impl Object{
     pub fn add_temp_force_no_torque(&mut self, temp : TempForce){
         let r = Vect::new((self.com.x()-temp.point().x()), (self.com.y()-temp.point().y()));
         //let tor : Torque = Torque::new_with_force(temp.force().clone(), r, self.momentum_rot.moment_of_inertia());
-        self.all_forces.push(TempAction::new(temp, Torque::new_with_force(Force::new_force(0.0).set_all_zero(), Vect::new(0.0, 0.0),9.0)));
+        self.all_forces.push(TempAction::new(temp, Torque::new_with_force(Force::new_force(0.0).set_all_zero(), Vect::new(0.0, 0.0),self.momentum_rot.moment_of_inertia())));
         
     }
     pub fn com(&self)-> Point{
@@ -233,7 +306,7 @@ impl Object{
         &self.body
     }
     pub fn draw(&self, frame :  &mut Frame<Renderer>  ){
-        self.body.draw(frame, Color::from_rgb8(20, 100, 100));
+        self.body.draw(frame, self.color);
     }
     pub fn reverse_v(& mut self){
         self.momentum.set(LinVar::Vx, -self.momentum.vx().unwrap());
@@ -241,8 +314,23 @@ impl Object{
         //self.momentum.set(LinVar::Ang, self.momentum.get_angle().unwrap());
     }
 
-    pub fn sendLog(&self) -> ObjectLog{
+    pub fn kinetic(&self) -> &KE{
+        &self.kinetic
+    }
+
+
+    pub fn sendLog(&mut self) -> ObjectLog{
+        self.momentum.calc_p_over_v();
+        self.momentum.calc_px_over_vx();
+        self.momentum.calc_py_over_vy();
         ObjectLog::new(self)
+    }
+
+    pub fn logged(&self) -> bool{
+        self.logged
+    }
+    pub fn rigid(&self) -> bool{
+        self.non_moving
     }
 
 
@@ -256,13 +344,14 @@ pub struct ObjectLog{
     mom : LinearMomentum,
     wmom: RotationalMomentum,
     forces: Vec<TempAction>,
-    com: Point
+    com: Point,
+    name : String
 }
 
 impl ObjectLog{
     pub fn new(obj : &Object)-> Self{
 
-        Self { ke: obj.kinetic.clone(), mom: obj.momentum.clone(), wmom: obj.momentum_rot.clone(), forces: obj.all_forces.clone(), com: obj.com.clone() }
+        Self { ke: obj.kinetic.clone(), mom: obj.momentum.clone(), wmom: obj.momentum_rot.clone(), forces: obj.all_forces.clone(), com: obj.com.clone(), name : obj.name.clone() }
 
     }
 }
@@ -289,6 +378,19 @@ impl TempAction {
         &self.torque
    }
 }
+
+impl Display for ObjectLog{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}\n", self.name).expect("msg");
+        for i in self.forces.iter(){
+            
+            write!(f, "{}\n", i).expect("Write failed in Objet Log");
+        }
+        write!(f, "\n{}\n{}\n{}\n{}\n",self.mom, self.wmom, self.ke, self.com)
+    }
+}
+
+
 
 /*
 impl Ord for TempAction{
