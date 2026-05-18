@@ -51,7 +51,7 @@ fn main() -> iced::Result {
    let mut imput : String = String::new();
    loop{
       imput.clear();
-      println!("Type in th number for the coressponding test:\n1:Projetile\n2:Kinetic energy and Momentum");
+      println!("Type in th number for the coressponding test:\n1:Projetile\n2:Orbiting Planets\n3:Object Collision\n4:Basket Shot\n5:Momentum Transfer\n6:Test, Idk what it does");
 
       
 
@@ -90,6 +90,7 @@ fn main() -> iced::Result {
       3 => syst = State::bouncing_about(),
       4 => syst = State::bucket(),
       5 => syst = set_up_billards(),
+      6 => syst = test(),
 
       _ => panic!()
    };
@@ -304,8 +305,8 @@ println!("actual r: {}", ((obj2.com().x()-obj1.com().x()).powi(2) + (obj2.com().
          Point::new(300.0,600.0+offset),
          
          ]);    
-      let obj1 : Object = Object::new(&mut poly, 10.0, false, true, 1, 10.0, true, Color::from_rgb8(60, 60, 20), String::from("Ball One")).with_starting_v(Vect::new(19.0, 22.0));   
-      let obj2 : Object = Object::new(&mut poly2, 10.0, false, true, 1, 10.0, true, Color::from_rgb8(60, 60, 20), String::from("Ball Two")).with_starting_v(Vect::new(-19.0, 22.0));   
+      let obj1 : Object = Object::new(&mut poly, 10.0, false, true, 1, 10.0, true, Color::from_rgb8(60, 60, 20), String::from("Ball One")).with_starting_v(Vect::new((62.9*f64::const::PI/180.0).cos()*24, (62.9*f64::const::PI/180.0).sin()*24));   
+      let obj2 : Object = Object::new(&mut poly2, 10.0, false, true, 1, 10.0, true, Color::from_rgb8(60, 60, 20), String::from("Ball Two")).with_starting_v(Vect::new(-(70.1*f64::const::PI/180.0).cos()*40, (70.1*f64::const::PI/180.0).sin()*40)));   
       let objb : Object = Object::new(&mut polyb, 10.0, true, true, 1, 10.0, false, Color::from_rgb8(60, 60, 20), String::from("Basket"));  
       let mut susy = System::new(vec![obj1,obj2,objb], Some(Point::new(0.0, 0.)), true, true) ;
       susy.start();
@@ -318,20 +319,20 @@ println!("actual r: {}", ((obj2.com().x()-obj1.com().x()).powi(2) + (obj2.com().
       let mut polyh =  Polygon::new(vec![
          Point::new(300.0,540.0),
          Point::new(310.0,545.0),
-         Point::new(320.0,640.0),
+         Point::new(320.0,560.0),
          Point::new(325.0,530.0),
          Point::new(320.0,520.0),
-         Point::new(310.0,415.0),
+         Point::new(310.0,400.0),
          Point::new(300.0,520.0),
          Point::new(295.0,530.0),
          ]);
       let mut polyt =  Polygon::new(vec![
          Point::new(500.0,540.0),
          Point::new(510.0,545.0),
-         Point::new(520.0,640.0),
+         Point::new(520.0,560.0),
          Point::new(525.0,530.0),
          Point::new(520.0,520.0),
-         Point::new(510.0,415.0),
+         Point::new(510.0,400.0),
          Point::new(500.0,520.0),
          Point::new(495.0,530.0),
          ]);   
@@ -665,7 +666,7 @@ fn set_up_billards() -> State{
    //let rec = (6.67e-13*(vars[0]/(vars[2]))).sqrt();
    loop{
       input.clear();
-      println!("What is the angke of initial vel? (deg)?");
+      println!("What is the angle of initial vel? (deg)? Note that beyond |45| will most likely not hit");
       std::io::stdin().read_line(&mut input).expect("kj");
       bad(&input);
       if let Ok(a) = input.trim().parse::<f64>(){
