@@ -68,7 +68,7 @@ fn main() -> iced::Result {
       let imp_res: Result<i32, ParseIntError> = imput.trim().parse();
       let Err(a) = imp_res else{
          imput_final = imp_res.unwrap();
-         if imput_final > 5{
+         if imput_final > 7{
             continue;
          }else {
             break;
@@ -81,7 +81,7 @@ fn main() -> iced::Result {
    }
    let syst : State;
 
-   let mut size : Size = Size::new(1024.0, 768.0);
+   
    match imput_final{
 
       1=> syst = set_up_ptojectile(),
@@ -90,7 +90,8 @@ fn main() -> iced::Result {
       3 => syst = State::bouncing_about(),
       4 => syst = State::bucket(),
       5 => syst = set_up_billards(),
-      6 => syst = test(),
+      6 => syst = State::test(),
+      7=> syst = State::bouncing_about_with_air(),
 
       _ => panic!()
    };
@@ -132,11 +133,11 @@ impl State{
       let mut poly2 : Polygon = Polygon::new(vec![Point::new(500.0,400.0),Point::new(530.0,400.0),Point::new(515.0,430.0),]);
       let obj1 : Object = Object::new(&mut poly, 2.0e18, false, true, 1, 2.0, true, Color::from_rgb8(150, 0, 150), String::from("One")).with_starting_v(Vect::new(0.0,33.0)).yes_i_am_attactive();
       let obj2 : Object = Object::new(&mut poly2, 2.0e18, false, true, 1, 2.0, true, Color::from_rgb8(150, 0, 150), String::from("One")).with_starting_v(Vect::new(0.0,-3.5)).yes_i_am_attactive();
-      let syst : System = System::new(vec![obj1,obj2], None, true, false);
+      let syst : System = System::new(vec![obj1,obj2], None, true, None);
       Self::new(syst)
    }
 
-   pub fn projectile(angle: f64, mag : f64, air_res : Option<f64>, mass: f64) -> Self {
+   pub fn projectile(angle: f64, mag : f64, spin: f64, air_res : Option<(f64, f64)>, mass: f64) -> Self {
        //let [t,l,r,b] = Self::frame();
        let [t,_l,_r,_b] = Self::frame();
        let offset :f64  =40.0;
@@ -154,8 +155,8 @@ impl State{
       let angle  = ((angle*f64::consts::PI)/180.0);
       let v : Vect = Vect::new(mag*angle.cos(), mag*angle.sin());
       let obj1 : Object = Object::new(&mut poly, mass, false, true, 1, 5.0,true, Color::from_rgb8(150, 0, 150), String::from("Ball"))
-         .with_starting_v(v);
-      let mut syst : System = System::new(vec![obj1,t], Some(Point::new(0.0, 800.0)), true, air_res.is_some());
+         .with_starting_v(v).with_starting_w(spin);
+      let mut syst : System = System::new(vec![obj1,t], Some(Point::new(0.0, 800.0)), true, air_res);
       syst.start();
       
       Self::new(syst)
@@ -235,42 +236,108 @@ let frame_right = Object::new(&mut Polygon::new(vec![
 
       ]);
       //let v_outer  = (6.67e-13 * mass1 / mass2).sqrt(); // ~57
-      let v_center = v * mass2 / mass1;         // ~0.057
-      //2
+      
+      let v_outer  = v/3.0;  
+      let v_center = -v * mass2 / (mass1 + mass2);
+        // ~0.057
+      //1000000000000000000
 
  
       let obj1: Object = Object::new(&mut poly1, mass1, false, false, 0, 10.0, true, Color::from_rgb8(200, 30, 200), String::from("Center Planet")).yes_i_am_attactive().with_starting_v(Vect::new(0.0, v_center));
-      let obj2: Object = Object::new(&mut poly2, mass2, false, false, 0, 10.0, true, Color::from_rgb8(200, 30, 200), String::from("Outer Planet")).with_starting_v(Vect::new(0.0, v)).yes_i_am_attactive();
+      let obj2: Object = Object::new(&mut poly2, mass2, false, false, 0, 10.0, true, Color::from_rgb8(200, 30, 200), String::from("Outer Planet")).with_starting_v(Vect::new(0.0, v_outer)).yes_i_am_attactive();
       println!("center com: {}, {}", obj1.com().x(), obj1.com().y());
 println!("outer  com: {}, {}", obj2.com().x(), obj2.com().y());
 println!("actual r: {}", ((obj2.com().x()-obj1.com().x()).powi(2) + (obj2.com().y() - obj1.com().y()).powi(2)).sqrt());
-      let syst = System::new(vec![obj1,obj2], None, false, false);
+      let syst = System::new(vec![obj1,obj2], None, false, None);
       State::new(syst)
    }
 
    pub fn bouncing_about() -> Self{
       let [t,l,r,b] = Self::frame();
       let mut poly : Polygon = Polygon::new(vec![
-         Point::new(675.0, 350.0),
-         Point::new(700.0, 200.0),
-         Point::new(725.0, 350.0),
+         Point::new(500.0,500.0),
+         Point::new(600.0,500.0),
+         Point::new(600.0,600.0),
+         Point::new(500.0,600.0),
       ]);
       let mut poly2 : Polygon = Polygon::new(vec![
-         Point::new(675.0, 650.0),
-         Point::new(700.0, 500.0),
-         Point::new(725.0, 650.0),
+         Point::new(800.0,500.0),
+         Point::new(900.0,500.0),
+         Point::new(900.0,600.0),
+         Point::new(800.0,600.0),
       ]);
       let mut poly3 : Polygon = Polygon::new(vec![
-         Point::new(875.0, 350.0),
-         Point::new(900.0, 200.0),
-         Point::new(925.0, 350.0),
+         Point::new(600.0,300.0),
+         Point::new(700.0,300.0),
+         Point::new(700.0,400.0),
+         Point::new(600.0,400.0),
+      ]);
+
+      let mut poly4 : Polygon = Polygon::new(vec![
+         Point::new(200.0,300.0),
+         Point::new(300.0,300.0),
+         Point::new(300.0,400.0),
+         Point::new(200.0,400.0),
+      ]);
+      let mut poly5 : Polygon = Polygon::new(vec![
+         Point::new(1000.0,700.0),
+         Point::new(1100.0,700.0),
+         Point::new(1100.0,800.0),
+         Point::new(1000.0,800.0),
       ]);
 
 
-      let obj1 : Object = Object::new(&mut poly, 10.0, false, true, 0, 10.0, true, Color::from_rgb8(20, 60, 120), String::from("2")).with_starting_v(Vect::new(10.0, 0.0));
-      let obj2 : Object = Object::new(&mut poly2, 10.0, false, true, 0,10.0, true, Color::from_rgb8(180, 60, 120), String::from("3")).with_starting_v(Vect::new(0.0, 8.0));
-      let obj3 : Object = Object::new(&mut poly3, 10.0, false, true, 0, 10.0, true, Color::from_rgb8(120, 160, 30), String::from("1")).with_starting_v(Vect::new(-10.0, 0.0));
-      let syst : System = System::new(vec![t,b,l,r,obj1,obj2,obj3], None, true, false);
+      let obj1 : Object = Object::new(&mut poly, 10.0, false, true, 0, 1.0, true, Color::from_rgb8(20, 60, 120), String::from("Blue")).with_starting_v(Vect::new(18.0, 0.0));
+      let obj2 : Object = Object::new(&mut poly3, 10.0, false, true, 0,1.0, true, Color::from_rgb8(180, 60, 120), String::from("Pink")).with_starting_v(Vect::new(0.0, -8.0));
+      let obj3 : Object = Object::new(&mut poly2, 10.0, false, true, 0, 1.0, true, Color::from_rgb8(120, 160, 30), String::from("Green")).with_starting_v(Vect::new(-18.0, 0.0));
+      let obj4 : Object = Object::new(&mut poly4, 10.0, false, true, 0, 1.0, true, Color::from_rgb8(230, 160, 30), String::from("Red")).with_starting_v(Vect::new(-18.0, 0.0));
+      let obj5 : Object = Object::new(&mut poly5, 10.0, false, true, 0, 1.0, true, Color::from_rgb8(100, 100, 100), String::from("Black")).with_starting_v(Vect::new(-18.0, 0.0));
+      let syst : System = System::new(vec![t,b,l,r,obj1,obj2,obj3,obj4,obj5], None, true, None);
+      State::new(syst)
+   }
+
+   pub fn bouncing_about_with_air() -> Self{
+      let [t,l,r,b] = Self::frame();
+      let mut poly : Polygon = Polygon::new(vec![
+         Point::new(500.0,500.0),
+         Point::new(600.0,500.0),
+         Point::new(600.0,600.0),
+         Point::new(500.0,600.0),
+      ]);
+      let mut poly2 : Polygon = Polygon::new(vec![
+         Point::new(800.0,500.0),
+         Point::new(900.0,500.0),
+         Point::new(900.0,600.0),
+         Point::new(800.0,600.0),
+      ]);
+      let mut poly3 : Polygon = Polygon::new(vec![
+         Point::new(600.0,300.0),
+         Point::new(700.0,300.0),
+         Point::new(700.0,400.0),
+         Point::new(600.0,400.0),
+      ]);
+
+      let mut poly4 : Polygon = Polygon::new(vec![
+         Point::new(200.0,300.0),
+         Point::new(300.0,300.0),
+         Point::new(300.0,400.0),
+         Point::new(200.0,400.0),
+      ]);
+      let mut poly5 : Polygon = Polygon::new(vec![
+         Point::new(1000.0,700.0),
+         Point::new(1100.0,700.0),
+         Point::new(1100.0,800.0),
+         Point::new(1000.0,800.0),
+      ]);
+
+
+      let obj1 : Object = Object::new(&mut poly, 1.0, false, true, 0, 1.0, true, Color::from_rgb8(20, 60, 120), String::from("Blue")).with_starting_v(Vect::new(28.0, 0.0));
+      let obj2 : Object = Object::new(&mut poly3, 1.0, false, true, 0,1.0, true, Color::from_rgb8(180, 60, 120), String::from("Pink")).with_starting_v(Vect::new(0.0, -18.0)).with_starting_w(3.0);
+      let obj3 : Object = Object::new(&mut poly2, 1.0, false, true, 0, 1.0, true, Color::from_rgb8(120, 160, 30), String::from("Green")).with_starting_v(Vect::new(-18.0, 0.0));
+      let obj4 : Object = Object::new(&mut poly4, 1.0, false, true, 0, 1.0, true, Color::from_rgb8(230, 160, 30), String::from("Red")).with_starting_v(Vect::new(-48.0, 0.0)).with_starting_w(-6.0);
+      let obj5 : Object = Object::new(&mut poly5, 1.0, false, true, 0, 1.0, true, Color::from_rgb8(100, 100, 100), String::from("Black")).with_starting_v(Vect::new(-18.0, 0.0));
+      let mut syst : System = System::new(vec![t,b,l,r,obj1,obj2,obj3,obj4,obj5], None, false, Some((0.05, 3.0)));
+      syst.start();
       State::new(syst)
    }
 
@@ -304,11 +371,25 @@ println!("actual r: {}", ((obj2.com().x()-obj1.com().x()).powi(2) + (obj2.com().
          Point::new(400.0,600.0+offset),
          Point::new(300.0,600.0+offset),
          
-         ]);    
-      let obj1 : Object = Object::new(&mut poly, 10.0, false, true, 1, 10.0, true, Color::from_rgb8(60, 60, 20), String::from("Ball One")).with_starting_v(Vect::new((62.9*f64::const::PI/180.0).cos()*24, (62.9*f64::const::PI/180.0).sin()*24));   
-      let obj2 : Object = Object::new(&mut poly2, 10.0, false, true, 1, 10.0, true, Color::from_rgb8(60, 60, 20), String::from("Ball Two")).with_starting_v(Vect::new(-(70.1*f64::const::PI/180.0).cos()*40, (70.1*f64::const::PI/180.0).sin()*40)));   
+         ]);   
+      let mut riml : Polygon = Polygon::new(vec![
+         Point::new(300.0,460.0+offset),
+         Point::new(310.0,460.0+offset),
+         Point::new(310.0,500.0+offset),
+         Point::new(300.0,500.0+offset),
+      ]);  
+      let mut rimr : Polygon = Polygon::new(vec![
+         Point::new(390.0,460.0+offset),
+         Point::new(400.0,460.0+offset),
+         Point::new(400.0,500.0+offset),
+         Point::new(390.0,500.0+offset),
+      ]);  
+      let obj1 : Object = Object::new(&mut poly, 10.0, false, true, 1, 10.0, true, Color::from_rgb8(60, 60, 20), String::from("Ball One")).with_starting_v(Vect::new((65.9*f64::consts::PI/180.0).cos()*26.0, (65.9*f64::consts::PI/180.0).sin()*26.0));   
+      let obj2 : Object = Object::new(&mut poly2, 10.0, false, true, 1, 10.0, true, Color::from_rgb8(60, 60, 20), String::from("Ball Two")).with_starting_v(Vect::new(-(70.1*f64::consts::PI/180.0).cos()*40.0, (70.1*f64::consts::PI/180.0).sin()*40.0));   
       let objb : Object = Object::new(&mut polyb, 10.0, true, true, 1, 10.0, false, Color::from_rgb8(60, 60, 20), String::from("Basket"));  
-      let mut susy = System::new(vec![obj1,obj2,objb], Some(Point::new(0.0, 0.)), true, true) ;
+      let objl : Object = Object::new(&mut riml, 10.0, true, true, 1, 10.0, false, Color::from_rgb8(60, 60, 20), String::from("Baskelt"));
+      let objr : Object = Object::new(&mut rimr, 10.0, true, true, 1, 10.0, false, Color::from_rgb8(60, 60, 20), String::from("Basketr"));    
+      let mut susy = System::new(vec![obj1,obj2,objb,objl,objr], Some(Point::new(0.0, 0.)), true, None) ;
       susy.start();
       State::new(susy)
    }
@@ -317,29 +398,30 @@ println!("actual r: {}", ((obj2.com().x()-obj1.com().x()).powi(2) + (obj2.com().
       let anng = and*f64::consts::PI/180.0;
       let ve = Vect::new(v*anng.cos(), v*anng.sin());
       let mut polyh =  Polygon::new(vec![
-         Point::new(300.0,540.0),
-         Point::new(310.0,545.0),
-         Point::new(320.0,560.0),
-         Point::new(325.0,530.0),
-         Point::new(320.0,520.0),
-         Point::new(310.0,400.0),
-         Point::new(300.0,520.0),
-         Point::new(295.0,530.0),
+         // Point::new(300.0,540.0),
+         // Point::new(310.0,545.0),
+         // Point::new(320.0,540.0),
+         // Point::new(325.0,530.0),
+         // Point::new(320.0,520.0),
+         // Point::new(310.0,515.0),
+         // Point::new(300.0,520.0),
+         // Point::new(295.0,530.0),
+         Point::new(100.0, 500.0),
+         Point::new(250.0, 500.0),
+         Point::new(250.0, 350.0),
+         Point::new(100.0, 350.0),
+
          ]);
       let mut polyt =  Polygon::new(vec![
-         Point::new(500.0,540.0),
-         Point::new(510.0,545.0),
-         Point::new(520.0,560.0),
-         Point::new(525.0,530.0),
-         Point::new(520.0,520.0),
-         Point::new(510.0,400.0),
-         Point::new(500.0,520.0),
-         Point::new(495.0,530.0),
+         Point::new(400.0, 500.0),
+         Point::new(550.0, 500.0),
+         Point::new(550.0, 350.0),
+         Point::new(400.0, 350.0),
          ]);   
 
-      let objh :Object =Object::new(&mut polyh, mass2, false, true, 0, 2.0, true, Color::BLACK, String::from("Hitter")).with_starting_v(ve);   
-      let objt :Object =Object::new(&mut polyt, mass1, false, true, 0, 2.0, true, Color::BLACK, String::from("Hitted"));
-      let syst = System::new(vec![objh,objt], None, false, false);
+      let objh :Object =Object::new(&mut polyh, mass2, false, true, 0, 1.0, true, Color::BLACK, String::from("Hitter")).with_starting_v(ve);   
+      let objt :Object =Object::new(&mut polyt, mass1, false, true, 0, 1.0, true, Color::BLACK, String::from("Hitted"));
+      let syst = System::new(vec![objh,objt], None, false, None);
       State::new(syst)
    }
 
@@ -488,7 +570,7 @@ fn subscription(
    Subscription::batch(vec![
         iced::time::every(Duration::from_secs_f64(1.0 / 60.0))
             .map(|_| Message::Tick),
-        iced::time::every(Duration::from_secs(2))
+        iced::time::every(Duration::from_secs_f64(1.0))
             .map(|_| Message::RequestLog),
         
     ])
@@ -501,9 +583,9 @@ fn subscription(
 
 
 fn set_up_ptojectile() -> State{
-   let mut vars: [f64; 4] = [0_f64;4];
+   let mut vars: [f64; 6] = [0_f64;6];
 
-   let nar_name: [&str; 4] = ["magnitiude velocity of the ball (m/s)","launch angle (deg)", "mass of the ball (kg)", "air resistance (coef, with recommened max of one)"];
+   let nar_name: [&str; 6] = ["magnitiude velocity of the ball (m/s)","launch angle (deg)", "mass of the ball (kg)", "air drag (coef, with recommened max of one)", "Rotaiotnal speed w (rads/sec)", "Air Lift Coeff"];
    let mut input : String = String::new();
    let mut i: usize =0;
    loop{
@@ -519,7 +601,7 @@ fn set_up_ptojectile() -> State{
 
       vars[i] = a;
       i+=1;
-      if i >3{
+      if i >5{
          break;
       }
       input.clear();
@@ -528,12 +610,12 @@ fn set_up_ptojectile() -> State{
 
    };
 
-   let [mag, ang, mass, air] = vars;
-   let mut aiir = Some(air);
-   if air.abs()<1e-10{
+   let [mag, ang, mass, air, spin, air_lift] = vars;
+   let mut aiir: Option<(f64, f64)> = Some((air, air_lift));
+   if air.abs()<1e-10 && air_lift.abs()<1e-10{
       aiir = None;
    }
-   State::projectile(ang, mag, aiir, mass)
+   State::projectile(ang, mag, spin, aiir, mass)
 }
 
 
@@ -584,10 +666,11 @@ fn set_up_planets() -> State{
       }
       
    }
-   //let rec = (6.67e-13*(vars[0]/(vars[2]))).sqrt();
+   
+   let rec = (((6.67e-13 * vars[0]) / (vars[2])).sqrt());
    loop{
       input.clear();
-      println!("What is the velocity of your outside object?");
+      println!("What is the velocity of your outside object? {}", rec);
       std::io::stdin().read_line(&mut input).expect("kj");
       bad(&input);
       if let Ok(a) = input.trim().parse::<f64>(){
@@ -666,7 +749,7 @@ fn set_up_billards() -> State{
    //let rec = (6.67e-13*(vars[0]/(vars[2]))).sqrt();
    loop{
       input.clear();
-      println!("What is the angle of initial vel? (deg)? Note that beyond |45| will most likely not hit");
+      println!("What is the angle of initial vel? (deg)? Note that beyond |45| will most likely not hit; below |40| gives better results");
       std::io::stdin().read_line(&mut input).expect("kj");
       bad(&input);
       if let Ok(a) = input.trim().parse::<f64>(){

@@ -3,7 +3,7 @@ use std::fmt::Display;
 use crate::Physics::{Vector, force::{forceing::Force}, momentum::linear::var::LinVar, unit, vars::{Var, index_get}};
 
 
-
+//Creates a specefic type of Variables
 pub type LinearMomentum = Var<LinVar, 8>;
 
 
@@ -54,7 +54,7 @@ impl LinearMomentum{
         //println!("{}, {}", self[LinVar::V].unwrap(), self[LinVar::M].unwrap());
     }
 
-    
+    //Auto calc. Can be a bit funcky if there are old vars that aren't None    
     pub fn calc_v(&mut self) -> Result<unit, LinErr>{
         let mut o : Option<unit> = None;
         

@@ -10,6 +10,7 @@ pub struct RotationalMomentum{
     w: unit
 }
 
+//Keeps a record of a non-vector Rotational Momentum
 
 impl RotationalMomentum{
 

@@ -239,7 +239,7 @@ impl Vector for Force {
         );
 
         if let Some(a) = res{
-            let ang = (a*(180 as unit))/(f64::consts::PI);
+            let ang = a;
             self.set(ForceIndex::Ang, ang);
             return Ok(ang);
         }

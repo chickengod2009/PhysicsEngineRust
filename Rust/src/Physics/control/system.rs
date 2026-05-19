@@ -1,6 +1,6 @@
 
 
-use crate::Physics::{force::{forceing::{Force, TempForce}, variable::ForceIndex}, objects::{Object, ObjectLog, polygons::{Point, Polygon, Vect}}, unit};
+use crate::Physics::{force::{forceing::{Force, TempForce}, variable::ForceIndex}, objects::{Object, ObjectLog, polygons::{Point, Polygon, Translation2d, Vect}}, unit};
 use iced::{self, Color};
 pub struct System{
 
@@ -9,7 +9,7 @@ pub struct System{
     potential : unit,
     with_eath : Option<Point>,
     with_gravity : bool,
-    with_air_res  : bool,
+    with_air_res  : Option<(unit, unit)>,
     mass_sum : unit,
     ke: unit
     
@@ -20,9 +20,10 @@ pub struct System{
 
 impl System{
 
-    pub fn new(obj : Vec<Object>, with_e : Option<Point>, with_grav : bool, with_air : bool) -> Self{
-        Self { objs: obj, m_e: 0.0, potential: 0.0, with_eath: with_e, with_gravity: with_grav, with_air_res: with_air, mass_sum: 0.0, ke: 0.0}
+    pub fn new(obj : Vec<Object>, with_e : Option<Point>, with_grav : bool, with_air : Option<(unit, unit)>,) -> Self{
+        Self { objs: obj, m_e: 0.0, potential: 0.0, with_eath: with_e, with_gravity: with_grav, with_air_res: with_air, mass_sum: 0.0, ke: 0.0,}
     }
+    //
     pub fn tick(&mut self){
         self.ke =0.0;
         self.potential =0.0;
@@ -38,14 +39,65 @@ impl System{
                 obj_a.collide(obj_b);
                 obj_a.attractive_forces(obj_b);
             }
-            if self.with_air_res{
-                let ob : &Object = &self.objs[i];
-                let kl = ob.vel_as_vect().normalized();
-                //let w = kl.clone().perp();
-                let vec = Vect::new(kl.x()*0.3, kl.y()*0.3 );
-                let temp : TempForce = TempForce::new(Force::from(vec), 1, false, ob.com());
-                //let temp2 = TempForce::new(Force::from(w), 1, false, Point::new(ob.com().x() + 5.9, ob.com().y() +5.0));
-                self.objs.get_mut(i).unwrap().add_temp_force(temp);
+            if let Some((a, b)) = self.with_air_res{
+                
+                let ob : &mut Object = &mut self.objs[i];
+                let cd = a;
+                let density: f64 = 1.225;
+                let area= ob.body_mut().area()*0.00001;
+                let force_mag =
+                    (0.5 * cd * area * density * ob.kinetic().velocity().powi(2))
+                    .min(1000.0);
+                let norm = Vect::new(ob.momentum().vx().unwrap_or(0.0), ob.momentum().vy().unwrap_or(0.0));
+                if norm.mag().abs() <= 1e-8{
+                    continue;
+                }
+                let norm = norm.normalized();
+                let y = norm.y()*force_mag;
+                let x = norm.x()*force_mag;
+                //println!("{}, {}, {}", x,y, ob.kinetic().velocity());
+                let mut force : Force = Force::from(Vect::new(x, y));
+                
+                force.set(ForceIndex::M, ob.mass());
+                force.a_calc_f();
+                    force.ay_from_fy();
+                    force.ax_calc_fx();
+            
+                self.objs.get_mut(i).unwrap().add_temp_force_no_torque(TempForce::new(force, 1, false, Point::new(0.0,0.0)));
+
+                //Magnus
+                if b.abs()> 1e-9{
+
+                    let obj = & mut self.objs[i];
+                    let cl =b;
+                    let v = obj.kinetic().velocity();
+                    let w = obj.rot_mom().w();
+
+                    let mag_mag = (0.5*(v*w)*cl*density*area).clamp(-100.0, 100.0);
+
+                    let perp = norm.perp();
+
+                    let x= perp.x()*mag_mag;
+                    let y = perp.y()*mag_mag;
+
+                    let mut force : Force = Force::from(Vect::new(x, y));
+                
+                    force.set(ForceIndex::M, obj.mass());
+                    force.a_calc_f();
+                    force.ay_from_fy();
+                    force.ax_calc_fx();
+                    self.objs.get_mut(i).unwrap().add_temp_force_no_torque(TempForce::new(force, 1, false, Point::new(0.0, 0.0)));
+
+
+
+
+
+
+                }
+
+
+
+                
                 
             }
             
@@ -136,6 +188,6 @@ impl Default for System{
     fn default() -> Self {
         System::new(vec![Object::new(&mut Polygon::default(), 1.0, false, true, 0, 3.0, true, Color::from_rgb8(200, 0, 200), String::from("l")),Object::new(&mut Polygon::new(vec![Point::new(100.0,100.0),Point::new(500.0,200.0),Point::new(200.0,100.1),]),
          1.0, false, true, 0, 
-         3.0, true, Color::from_rgb8(200, 0, 200), String::from("h")) ] , None, false, false)
+         3.0, true, Color::from_rgb8(200, 0, 200), String::from("h")) ] , None, false, None)
     }
 }

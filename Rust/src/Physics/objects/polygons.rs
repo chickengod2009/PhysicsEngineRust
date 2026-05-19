@@ -305,6 +305,8 @@ impl Display for Angle{
 
 impl Polygon{
 
+    //I found some SAT Collision online that use the normals of the sides to fin overlapping acceses and collision
+
     pub fn collision(&mut self, ot: &mut Self) -> Option<Collision> {
 
     let mut smallest_overlap = f64::MAX as unit;
@@ -416,7 +418,8 @@ impl Polygon{
     }
     pub fn rotation(&mut self, trand: Rotational2d ){
 
-        let trnn = Rotational2d::new(trand.angle*30.0);
+        let trnn = Rotational2d::new(trand.angle*50.0);
+        //Smoother rotation
       	
         let trans : RotSinCos = RotSinCos::new(trnn);
         
@@ -505,7 +508,7 @@ impl Translation2d{
         Self { x:x, y:y }
     }
 }
-
+//Direction is negated because window flips the cordinates
 impl Add<&Translation2d> for Point{
     type Output = Self;
 
@@ -520,6 +523,7 @@ impl AddAssign<&Translation2d> for Point {
     fn add_assign(&mut self, rhs: &Translation2d) {
         self.x+= rhs.x*10.0;
         self.y+=rhs.y*10.0;
+        //For more smoother movement
     }
 }
 impl AddAssign<&Translation2d> for Line {

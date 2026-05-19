@@ -1,6 +1,7 @@
 use std::{clone, fmt::{Debug, write}};
 use std::ops::{Index, IndexMut};
 
+//This File is mostly just for an easier to use and acces container for variables
 use super::unit;
 #[derive(Clone)]
 pub struct Var<T:index_get, const N:usize>
